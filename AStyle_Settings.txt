@@ -1,0 +1,1 @@
+c:\projects\astyle.exe --style=allman --indent=spaces=4 --unpad-paren --convert-tabs *.cpp
