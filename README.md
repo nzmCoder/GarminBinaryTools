@@ -1,2 +1,2 @@
 # GarminBinary
-Project to communicate with Garmin GPS receivers using the binary protocol.
+Windows executables to communicate with Garmin GPS receivers using the binary protocol.
