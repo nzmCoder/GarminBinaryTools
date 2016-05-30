@@ -1,0 +1,1 @@
+This compiles with Microsoft Visual C++.
