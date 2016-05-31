@@ -1,39 +1,33 @@
 /********************************************************************
-** @source ASYNC MESSAGE LOGGER for selected Garmin GPS Receivers
-**
-** @author Copyright (C) 2000,2001 Antonio Tabernero
-** @version 1.22
-** @modified Jun 28 2000 Antonio Tabernero. First version
-** @last modified Apr 10 2001  Antonio Tabernero.
-** @last modified Apr 21 2001  Antonio Tabernero.
-** @last modified Jun 25 2001  Antonio Tabernero.
-** @last modified Sep  3 2001  Antonio Tabernero
-** @last modified Mar 23 2002  Antonio Tabernero
-** @last modified Apr 23 2016  Norm Moulton
-** @@
-**
-** This library is free software; you can redistribute it and/or
-** modify it under the terms of the GNU Library General Public
-** License as published by the Free Software Foundation; either
-** version 2 of the License, or (at your option) any later version.
-**
-** This library is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-** Library General Public License for more details.
-**
-** You should have received a copy of the GNU Library General Public
-** License along with this library; if not, write to the
-** Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-** Boston, MA  02111-1307, USA.
+ASYNC MESSAGE LOGGER for selected Garmin GPS Receivers
+
+Copyright (C) 2000-2002 Antonio Tabernero
+Copyright (C) 2016 Norm Moulton
+Created 28 Jun 2000, Last modified 23 Mar 2002, Antonio Tabernero.
+Modifications started 30 May 2016, Norm Moulton
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 ********************************************************************/
 
 /****************************************************************
 1.24   * Changes 2016 by N. Moulton
        * Removed Linux option
-       * Reformated source code 
-       * Fixed serial problems in Windows
-       
+       * Reformated source code
+       * Fixed all compile warnings
+       * Attempted to fix serial problems in Windows
+
 1.23   * Option -all to log the serial port stream directly to a file
        * Option -stdout to redirect the output to the standard output
 
@@ -76,9 +70,9 @@
 FILE* TRACE;
 #endif
 
-/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Possible commands
-/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 #define CHECK   1
 #define IDENT   2
 #define ASYNC   3
@@ -88,9 +82,9 @@ FILE* TRACE;
 #define TEST    11
 #define LOG_ALL 12
 
-/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Default Arguments
-/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 #define DEF_COMMAND         IDENT       // Get product ID                        
 #define DEF_FLAG            0xffff      // All events
 #define DEF_FLAG_REQUEST    0x0001      // Default Request
@@ -100,10 +94,11 @@ FILE* TRACE;
 #define DEF_PORT  "COM1"
 #define M_PI      3.141592653589793
 
-static const char MONTH[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", 
-	"Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
- 
-/////////////////////////////////////////////////////////////////////
+static const char MONTH[12][4] = {"Jan", "Feb", "Mar", "Apr", "May",
+                                  "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+                                 };
+
+/////////////////////////////////////////////////////////////////////////////
 
 
 #define ID_PACKET   mInBuffer[0]    // ID Position in Packet
@@ -128,20 +123,19 @@ static const char MONTH[12][4] = {"Jan", "Feb", "Mar", "Apr", "May",
 
 #define MAX_FAILED 50
 
-/////////////////////////////////////////////////////////////////////
-
+/////////////////////////////////////////////////////////////////////////////
 // Error codes
 
-#define E_ABRIR  		  0  // Verb: Open
-#define E_SETUP  		  1
-#define E_GETCOMM		  2
-#define E_SETCOMM		  3
-#define E_GETTIME		  4
-#define E_SETTIME		  5
-#define E_PURGE  		  6
-#define E_CERRAR 		  7  // Close
+#define E_OPEN            0
+#define E_SETUP           1
+#define E_GETCOMM         2
+#define E_SETCOMM         3
+#define E_GETTIME         4
+#define E_SETTIME         5
+#define E_PURGE           6
+#define E_CLOSE           7
 
-#define E_READ 	          8
+#define E_READ            8
 #define E_TIMEOUT         9
 #define E_EXPECTED_ACK    10
 #define E_EXPECTED_PACKET 11
@@ -149,11 +143,11 @@ static const char MONTH[12][4] = {"Jan", "Feb", "Mar", "Apr", "May",
 #define E_WRITE           16
 #define E_WRITE_SHORT     17
 
-#define E_ORDEN           31  // Out of Order
+#define E_OPTION          31
 
 
-//////////////////////////////////////////////////////////////////////
-//Types
+/////////////////////////////////////////////////////////////////////////////
+// Types
 
 typedef unsigned char BYTE;
 typedef unsigned long ULONG;
@@ -165,7 +159,7 @@ typedef struct
     double lon;
 } D_POS;
 
-/////////////////////////////////////////////////////////////////////7
+/////////////////////////////////////////////////////////////////////////////
 // Global variables
 
 ULONG mCharsRead;
@@ -186,15 +180,15 @@ BYTE mVerbose;
 BOOLEAN mIsStdOut=0;
 HANDLE  mComHnd;
 
-/////////////////////////////////////////////////////////////////////7
+/////////////////////////////////////////////////////////////////////////////
 // Function Declarations
 
-/////////// Serial Port Functions
+// Serial Port Functions
 BOOLEAN open_port(char *ComPort);
 BOOLEAN close_port();
 void set_error(BYTE b);
 
-/////////// Serial Port Read Functions
+// Serial Port Read Functions
 UINT read_data(BOOLEAN responde);
 UINT read_packet();
 BOOLEAN read_char(BYTE *bptr);
@@ -202,17 +196,17 @@ UINT strip_packet(UINT n, BYTE *ack);
 UINT send_ack(BYTE id,BYTE ok);
 void show_in(UINT n);
 
-/////////// Serial Port Write Functions
+// Serial Port Write Functions
 UINT build_packet(BYTE *data);
 UINT read_ack(BYTE id);
 UINT send_packet(BYTE *data);
 void show_out(UINT n);
 
-///////// Auxilary functions
+// Auxilary functions
 UINT get_uint(BYTE* ptr);
 ULONG get_long(BYTE* ptr);
 
-/////////  GPS related functions
+// GPS related functions
 void ident();
 BOOLEAN async(int flag_async);
 void log_packets_0x33(FILE *fich);
@@ -220,28 +214,28 @@ void log_packets_async(int flag,double T_LOG,FILE *fich);
 ULONG log_packets_request(UINT flag_request, FILE *fich);
 
 
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Wait for msec milliseconds
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 void pause(int msec)    // Pause in msec
 {
     Sleep(msec);
 }
 
-/////////// Serial Port Open & Close Functions
-////////////////////////////////////////////////////////////
-
+/////////////////////////////////////////////////////////////////////////////
+// Serial Port Open & Close Functions
+/////////////////////////////////////////////////////////////////////////////
 BOOLEAN open_port(char *ComPort)
 {
     DCB      m_dcb;
     COMMTIMEOUTS m_CommTimeouts;
 
     mComHnd = CreateFile(ComPort, GENERIC_READ | GENERIC_WRITE,
-                      0, // exclusive access
-                      NULL, // no security
-                      OPEN_EXISTING,
-                      0, // no overlapped I/O
-                      NULL); // null template
+                         0, // exclusive access
+                         NULL, // no security
+                         OPEN_EXISTING,
+                         0, // no overlapped I/O
+                         NULL); // null template
 
     if(mComHnd==INVALID_HANDLE_VALUE)
     {
@@ -249,7 +243,7 @@ BOOLEAN open_port(char *ComPort)
         fprintf(TRACE,"Can't open port %s\n",ComPort);
         fflush(TRACE);
 #endif
-        set_error(E_ABRIR);
+        set_error(E_OPEN);
         return 0;
     }
     else
@@ -260,7 +254,7 @@ BOOLEAN open_port(char *ComPort)
 #endif
     }
 
-// Input/Output buffer size
+    // Input/Output buffer size
     if(SetupComm(mComHnd, MAXBUF, MAXBUF)==0)
     {
         close_port();
@@ -268,10 +262,10 @@ BOOLEAN open_port(char *ComPort)
         return 0;
     }
 
-// Port settings are specified in a Data Communication Block (DCB).
-// The easiest way to initialize a DCB is to call GetCommState
-// to fill the default values, override the values that you
-// wannna change and then call SetCommState to set the values.
+    // Port settings are specified in a Data Communication Block (DCB).
+    // The easiest way to initialize a DCB is to call GetCommState
+    // to fill the default values, override the values that you
+    // wannna change and then call SetCommState to set the values.
 
     if(GetCommState(mComHnd, &m_dcb)==0)
     {
@@ -293,7 +287,7 @@ BOOLEAN open_port(char *ComPort)
         return 0;
     }
 
-// Optional Communication timeouts can be set similarly:
+    // Optional Communication timeouts can be set similarly:
 
     if(GetCommTimeouts(mComHnd, &m_CommTimeouts)==0)
     {
@@ -315,7 +309,7 @@ BOOLEAN open_port(char *ComPort)
         return 0;
     }
 
-// Purging comm port at start
+    // Purging comm port at start
 
     if(PurgeComm(mComHnd,PURGE_TXCLEAR | PURGE_RXCLEAR)==0)
     {
@@ -332,7 +326,7 @@ BOOLEAN close_port()
 {
     if(CloseHandle(mComHnd)==0)
     {
-        set_error(E_CERRAR);
+        set_error(E_CLOSE);
         return 0;
     }
 #ifdef TRACE_IO
@@ -343,8 +337,9 @@ BOOLEAN close_port()
 }
 
 
-/////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Serial Port IO Debugging Functions
+/////////////////////////////////////////////////////////////////////////////
 
 void show_in(UINT n)
 {
@@ -369,9 +364,9 @@ void show_out(UINT n)
 }
 
 
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Eliminates start/end and repeated DLE bytes and check CHECKSUM
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 UINT strip_packet(UINT n, BYTE *ack)
 {
     UINT k,cont,maxn;
@@ -403,13 +398,13 @@ UINT strip_packet(UINT n, BYTE *ack)
     return cont;
 }
 
-/////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
 // WAIT UNTIL A CHAR (*x) IS READ FROM SERIAL PORT OR A TIMEOUT OCCURS
 // RETURN 0 when TIMEOUT, 1 if OK
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 BOOLEAN read_char(BYTE *x)
 {
-    //UINT nb;
     ULONG nb;
     double CPMS=CLOCKS_PER_SEC/1000.0;
     clock_t start=clock();
@@ -441,18 +436,18 @@ BOOLEAN read_char(BYTE *x)
 }
 
 
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // READ SERIAL PORT UNTIL THE END OF PACKET is DETECTED
 // THE PACKET (ALREADY STRIPPED) IS FOUND in INBUFFER[]
 // ERRORS: READ ERROR in PORT
 //         PACKET LONGER THAN MAXBUF
 // RETURN number of bytes in packet (OK) or 0 (ERROR)
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 UINT read_packet()
 {
     UINT buf_ptr = 0;
     BYTE c;
- 
+
     while(1)
     {
         if(read_char(&c)==0) return 0;
@@ -502,13 +497,13 @@ void check_packet(UINT n)
 }
 
 
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // TRY TO READ AN EXPECTED PACKET FROM SERIAL PORT.
 // IF answer==1, SEND AN ACK/NACK packet.
 // IN case of error, it tries to read it again until it is ACKed.
 // RETURN 0 (if error) or the number of bytes in the packet received.
 // When done, the stripped packet is placed in mInBuffer[]
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 UINT read_data(BOOLEAN answer)
 {
     UINT nb;
@@ -535,11 +530,10 @@ UINT read_data(BOOLEAN answer)
 }
 
 
-
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Prepares the data contained in data[] as a proper Garmin IO packet
 // Return the length of the resulting packet
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 UINT build_packet(BYTE *data)
 {
     BYTE chk;
@@ -573,10 +567,10 @@ UINT build_packet(BYTE *data)
 }
 
 
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // SEND an ACK (ok=1) or NACK (ok=0) to a received packet of identity id
 // Returns 0 (in error) or  number of bytes written to the comm port
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 UINT send_ack(BYTE id,BYTE ok)
 {
     UINT nbytes,r;
@@ -616,9 +610,9 @@ UINT send_ack(BYTE id,BYTE ok)
 }
 
 
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Wait WAIT_FOR_ACK msec listening for an ACK/NCK packet
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 UINT read_ack(BYTE id)
 {
     UINT BytesRead;
@@ -641,11 +635,11 @@ UINT read_ack(BYTE id)
 
 
 
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Receives a data packet, wrapps it according to the protocol, and
 // checksums, etc, sends it, and wait for ACK. If not ACKed, it is sent again.
 // Returns 0 (if error) or numberofbytes written to comm port .
-/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 UINT send_packet(BYTE *data)
 {
     UINT nbytes;
@@ -716,9 +710,9 @@ UINT send_packet(BYTE *data)
 }
 
 
-//////////////////////////////////////////////////////////////
-// set the error code so that we can know what went astray.
-//////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// Set the error code so that we can know what went astray.
+/////////////////////////////////////////////////////////////////////////////
 void set_error(BYTE n)
 {
     *mErrCodePtr |= ((1L)<<n);
@@ -731,9 +725,9 @@ void set_error(BYTE n)
 
 
 
-///////////////////////////////////////////////////////////////////
-//// Get uint or ulong in a byte string
-/////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// Get uint or ulong in a byte string
+/////////////////////////////////////////////////////////////////////////////
 UINT get_uint(BYTE* ptr)
 {
     UINT x;
@@ -756,14 +750,14 @@ ULONG get_long(BYTE* ptr)
     return x;
 }
 
+/////////////////////////////////////////////////////////////////////////////
+// GPS related functions
+/////////////////////////////////////////////////////////////////////////////
+
 
 /////////////////////////////////////////////////////////////////////////////
-////   GPS related functions
-//////////////
-
-////////////////////////////////////////////
-//Displays Product ID, software version, etc
-/////////////////
+// Displays Product ID, software version, etc
+/////////////////////////////////////////////////////////////////////////////
 
 void check_port()
 {
@@ -792,7 +786,7 @@ void ident()
     bptr+=2;
     ver=get_uint(bptr);
     bptr+=2;
-    printf("Product ID: %d, \"%s\", Firmware %4.2f\n",prod,(char*)bptr,(float)ver/100.0);
+    printf("Product ID: %d, \"%s\", V%4.2f\n",prod,(char*)bptr,(float)ver/100.0);
 
     return;
 }
@@ -956,23 +950,21 @@ void write_packet(FILE *dest)
 void log_packets_0x33(FILE *f_bin)
 {
     clock_t start=clock();
-    double dt,MAX_WAIT;
-    UINT n,fix;
-    ULONG rec,ok;
-
-    rec=ok=0;
-
-    MAX_WAIT=10;                    // Wait for a valid 3D 0x33
+    double dt = 0;
+    const double MAX_WAIT = 15;  // Wait seconds for a 3D fix in msg 0x33
+    UINT n, fix;
+    ULONG rec = 0;
+    ULONG ok = 0;
 
     if(mVerbose)
     {
-        printf("-----------------------------------------------------------------\n");
+        printf("----------------------------------------------------------------------------\n");
         printf("Waiting to verify 3D fix  (%.0f secs at most)\n",MAX_WAIT);
     }
     start=clock();
     if(async(0xffff)==0) return;    // Enable Async messages
 
-    mReadTimeOut=5000;
+    mReadTimeOut=3000;
     do
     {
         n=read_data(0);
@@ -1007,7 +999,7 @@ void log_packets_0x33(FILE *f_bin)
 
     if(dt>=MAX_WAIT)
     {
-        printf("-----------------------------------------------------------------\n");
+        printf("----------------------------------------------------------------------------\n");
         printf("%.0f seconds waiting for 0x33 records with a 3D fix.\n",MAX_WAIT);
         printf("Could not verify 3D fix. The data quality may be poor.\n");
         printf("Let's give it a try anyway, but RINEX file processing may fail.\n");
@@ -1170,7 +1162,7 @@ int log_stream(double T_LOG, FILE *f_bin)
     return 1;
 }
 
-void log_packets_async(int flag,double T_LOG, FILE *f_bin)
+void log_packets_async(int flag, double T_LOG, FILE *f_bin)
 {
     clock_t start=clock();
     double dt;
@@ -1179,14 +1171,16 @@ void log_packets_async(int flag,double T_LOG, FILE *f_bin)
     int failed=0;
 
     if(mVerbose)
-        printf("-----------------------------------------------------------------\n");
+        printf("----------------------------------------------------------------------------\n");
+
+    // This text will quickly be overwritten when GPS receives first async message.
+    printf("Specified async messages not read. Is GPS compatible?%c", 13);
 
     start=clock();
-
     if(async(flag)==0) return;    // Enable Async messages
 
     mCharsRead=0;
-    mReadTimeOut=1000;  //One second timeout
+    mReadTimeOut=1000;            // One second timeout
 
     do
     {
@@ -1228,7 +1222,7 @@ void log_packets_async(int flag,double T_LOG, FILE *f_bin)
 
 
     if(mVerbose)
-        printf("-----------------------------------------------------------------\n");
+        printf("----------------------------------------------------------------------------\n");
 
 }
 
@@ -1247,7 +1241,7 @@ ULONG log_packets_request(UINT flag_request, FILE* dest)
     if(read_data(1)==0) return 0;
 
     if(mVerbose)
-        printf("-----------------------------------------------------------------\n");
+        printf("----------------------------------------------------------------------------\n");
 
     write_packet(dest);
 
@@ -1257,7 +1251,7 @@ ULONG log_packets_request(UINT flag_request, FILE* dest)
         if(mVerbose)
         {
             printf("One record received\n");
-            printf("-----------------------------------------------------------------\n");
+            printf("----------------------------------------------------------------------------\n");
         }
         return 1;
     }
@@ -1280,7 +1274,7 @@ ULONG log_packets_request(UINT flag_request, FILE* dest)
     if(mVerbose)
     {
         printf("Records   : %3d expected. %3d actually received\n",nrecords,k);
-        printf("-----------------------------------------------------------------\n");
+        printf("----------------------------------------------------------------------------\n");
     }
 
     close_port();
@@ -1289,9 +1283,9 @@ ULONG log_packets_request(UINT flag_request, FILE* dest)
 }
 
 
-///////////////////////////////////////
-/// DISPLAY ERROR MSG
-///////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// Display Error Msg
+/////////////////////////////////////////////////////////////////////////////
 int check_bit(ULONG x, BYTE pos)
 {
     ULONG mask = 1 << pos;
@@ -1302,75 +1296,77 @@ void show_err_msg(ULONG n)
 {
     if(n==0)
     {
-        if(mVerbose==2) printf("No comm errors during process\n");
+        if(mVerbose==2) printf("No comm errors during process.\n");
         return;
     }
 
     printf("Serial Comm Error %ld -> 0x%08lx: ",n,n);
-    if(check_bit(n,0)) printf("Can't open serial port\nPossibly being used by another aplication\n");
-    if(check_bit(n,1)) printf("Error in SETUP COMM port\n");
-    if(check_bit(n,2)) printf("Error in  GetComm\n");
-    if(check_bit(n,3)) printf("Error in  SetComm\n");
-    if(check_bit(n,4)) printf("Error in  GetTimeOuts\n");
-    if(check_bit(n,5)) printf("Error in  SetTimeOuts\n");
-    if(check_bit(n,6)) printf("Error purging COM port\n");
-    if(check_bit(n,7)) printf("Error closing COM port: maybe it is already closed\n");
-    if(check_bit(n,8)) printf("Hardware Error reading COMM port\n");
+    if(check_bit(n,0)) printf("Can't open serial port.\nPossibly being used by another application.\n");
+    if(check_bit(n,1)) printf("Error in SETUP COMM port.\n");
+    if(check_bit(n,2)) printf("Error in GetComm.\n");
+    if(check_bit(n,3)) printf("Error in SetComm.\n");
+    if(check_bit(n,4)) printf("Error in GetTimeOuts.\n");
+    if(check_bit(n,5)) printf("Error in SetTimeOuts.\n");
+    if(check_bit(n,6)) printf("Error purging COM port.\n");
+    if(check_bit(n,7)) printf("Error closing COM port: maybe it is already closed.\n");
+    if(check_bit(n,8)) printf("Hardware Error reading COMM port.\n");
     if(check_bit(n,9) && check_bit(n,10))
     {
-        printf("TIMEOUT waiting for ACK\n");
+        printf("TIMEOUT waiting for ACK.\n");
         printf("GPS doesn't answer in %s: Is it on and in GRMN/GRMN mode?\n",mPort);
     }
     if(check_bit(n,9) && check_bit(n,11))
     {
-        printf("TIMEOUT waiting for a PACKET\n");
+        printf("TIMEOUT waiting for a PACKET.\n");
         printf("GPS doesn't answer in %s: Is it on and in GRMN/GRMN mode?\n",mPort);
     }
-    if(check_bit(n,16)) printf("Hardware Error when sending data to COM port\n");
-    if(check_bit(n,17)) printf("Short Write in COM port\n");
-    if(check_bit(n,31)) printf("Command not recognized; You should not be seeing this\n");
+    if(check_bit(n,16)) printf("Hardware Error when sending data to COM port.\n");
+    if(check_bit(n,17)) printf("Short Write in COM port.\n");
+    if(check_bit(n,31)) printf("Command not recognized; You should not be seeing this.\n");
 }
 
 
-/////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Set default values and parse user arguments
-//////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
 void print_help()
 {
     char help[2048];
 
     sprintf(help,
-	"-----------------------------------------------------------------\n"\
-	"* Async Software to log raw GPS data from some Garmin handhelds *\n"\
-    "* Version 1.23.    Copyright 2000, 2001 Antonio Tabernero Galan *\n"\
-    "* Version %4.2f.    Copyright 2016  Norm Moulton                 *\n"\
-    "-----------------------------------------------------------------\n"\
-    "Usage:\n"\
-    "  async or async -h: shows this help\n"\
-    "  async command [options]\n\n",VERSION);
-	
-    strcat(help,
-    "------------------- ASYNC COMMANDS ------------------------------\n\n"\
-    "  async -c        : Only checks com port availability.\n"\
-    "  async -i        : Only gets the GPS ID (default).\n"\
-    "  async -a 0xnnnn : Enable async events with hex mask nnnn.\n"\
-    "  async -r 0xnnnn : Sends request type nnnn.\n"\
-    "  async -rinex    : Logs records needed to compute pseudoranges\n"\
-	"                    and phase for generation of a RINEX file.\n"\
-    "  async +doppler  : Logs Doppler shift data in addition to\n"\
-	"                    pseudorange and phase. Alternate instead of -rinex.\n"\
-    "                    Be warned that since there is now more data coming from\n"\
-    "                    the serial port you might start missing some observations.\n\n");
+            "----------------------------------------------------------------------------\n"\
+            "* Async Software logs raw GPS measurement data from some Garmin handhelds  *\n"\
+            "* Version 1.23, Copyright 2000-2002 Antonio Tabernero Galan                *\n"\
+            "* Version %4.2f, Copyright 2016 Norm Moulton                                *\n"\
+            "----------------------------------------------------------------------------\n"\
+            "Usage:\n"\
+            "  async command [options]\n\n",VERSION);
 
     strcat(help,
-    "-------------------- ASYNC OPTIONS   ---------------------------------------\n\n"\
-    "  async -p port     : Selects serial comm port (eg. COM1)\n"\
-    "  async -t ttt      : Sets log time to ttt seconds. Default 30 sec.\n"\
-    "  async -o filename : Save received packets in filename\n"\
-    "                       By default the output goes to week_second.g12\n\n"\
-    "----------------------------------------------------------------------------\n");
-    
+           "------------------- ASYNC COMMANDS -----------------------------------------\n\n"\
+           "  -h        : Shows this help text.\n"\
+           "  -c        : Checks com port availability.\n"\
+           "  -i        : Gets the GPS receiver identification string.\n"\
+           "  -rinex    : Logs records needed to compute pseudorange and carrier phase.\n\n");
+
+    strcat(help,
+           "-------------------- ASYNC OPTIONS   ---------------------------------------\n\n"\
+           "  -p port     : Selects serial comm port, (eg. COM1).\n"\
+           "  -t ttt      : Sets logging time to ttt seconds. Default is 30 sec.\n"\
+           "  -o filename : Specifies output filename.\n"\
+           "                By default the output goes to week_second.g12\n\n"\
+           "----------------------------------------------------------------------------\n");
+
+// Experimental "undocumented" options:
+//
+// async -a 0xnnnn : Enable async events with hex mask nnnn.
+// async -r 0xnnnn : Sends hex request type nnnn.
+// async +doppler  : Logs Doppler shift data in addition to pseudorange
+//                   and phase. Doppler data is not used in the PPP
+//                   solution and this option sometimes causes data errors
+//                   on start-up, and missed observations of other data.
+
     printf("%s",help);
     exit(0);
 }
@@ -1496,14 +1492,15 @@ void parse_args(int argc,char** argv,BYTE *command,double* log_time,unsigned int
 
     if(mIsStdOut==0)
     {
-        printf("-----------------------------------------------------------------\n");
-        printf("* Async Software to log raw GPS data from some Garmin handhelds *\n");
-        printf("* Version 1.23.    Copyright 2000, 2001 Antonio Tabernero Galan *\n");
-        printf("* Version %4.2f.    Copyright 2016  Norm Moulton                 *\n",VERSION);
-        printf("-----------------------------------------------------------------\n");
+        printf("----------------------------------------------------------------------------\n"\
+               "* Async Software logs raw GPS measurement data from some Garmin handhelds  *\n"\
+               "* Version 1.23, Copyright 2000-2002 Antonio Tabernero Galan                *\n"\
+               "* Version %4.2f, Copyright 2016 Norm Moulton                                *\n"\
+               "----------------------------------------------------------------------------\n"\
+               "", VERSION);
     }
     // Display info
-    if(mVerbose==2)  printf("GPS Time %6u. GMT %s",gps_time,asctime(gmt));
+    if(mVerbose==2)  printf("GPS Time %6u. UTC %s",gps_time,asctime(gmt));
 
     if(mVerbose)
     {
@@ -1513,44 +1510,44 @@ void parse_args(int argc,char** argv,BYTE *command,double* log_time,unsigned int
         case IDENT:
             printf("GPS Identification.\n");
             break;
-			
+
         case CHECK:
             printf("Check Comm Port\n");
             break;
-			
+
         case LOG_ALL:
             printf("Binary dump from serial port.\n");
             printf("Log-time %.0f sec. File: %s\n",*log_time,fich);
             break;
-			
+
         case TEST:
             printf("Test async events (mask 0xffff)\nLog-time %.0f sec to file %s\n",*log_time,fich);
             break;
-			
+
         case ASYNC:
             printf("Log async events (mask 0x%04x)\nLog-time %.0f sec. ",*flag,*log_time);
             printf("Output binary file: %s\n",fich);
             break;
-			
+
         case REQST:
             printf("Request records (type 0x%04x).\n",*flag);
             printf("Output binary file: %s\n",fich);
             break;
-			
+
         case RINEX:
             printf("Log pseudorange and phase.\nLog-time %.0f sec. ",*log_time);
             printf("Output binary file: %s\n",fich);
             break;
-			
+
         case DOPPLER:
             printf("Log pseudorange, phase, and Doppler.\nLog-time %.0f sec. ",*log_time);
             printf("Output binary file: %s\n",fich);
             break;
-			
+
         default:
             break;
         }
-        printf("-----------------------------------------------------------------\n");
+        printf("----------------------------------------------------------------------------\n");
     }
 
 }
@@ -1675,8 +1672,8 @@ int main(int argc, char **argv)
         break;
 
     default:
-        set_error(E_ORDEN);
-        printf("Unknown command");
+        set_error(E_OPTION);
+        printf("Unknown command option");
         break;
     }
 
