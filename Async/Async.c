@@ -1,4 +1,4 @@
-/********************************************************************
+/****************************************************************************
 ASYNC MESSAGE LOGGER for selected Garmin GPS Receivers
 
 Copyright (C) 2000-2002 Antonio Tabernero
@@ -19,9 +19,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-********************************************************************/
+****************************************************************************/
 
-/****************************************************************
+/****************************************************************************
+
 1.24   * Changes 2016 by N. Moulton
        * Removed Linux option
        * Reformated source code
@@ -47,7 +48,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
        * Relax the fix condition on 0x33 records (for eMap, etrex)
 
 1.00   First version
-*****************************************************************/
+
+****************************************************************************/
 
 #define VERSION 1.24
 
@@ -85,10 +87,10 @@ FILE* TRACE;
 /////////////////////////////////////////////////////////////////////////////
 // Default Arguments
 /////////////////////////////////////////////////////////////////////////////
-#define DEF_COMMAND         IDENT       // Get product ID                        
+#define DEF_COMMAND         IDENT       // Get product ID
 #define DEF_FLAG            0xffff      // All events
 #define DEF_FLAG_REQUEST    0x0001      // Default Request
-#define DEF_LOG_TIME        30          // 30 sec 
+#define DEF_LOG_TIME        30          // 30 sec
 #define DEF_VERBOSE_LEVEL   1           // Verbosity level
 
 #define DEF_PORT  "COM1"
