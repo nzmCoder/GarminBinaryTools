@@ -1,19 +1,26 @@
+/****************************************************************************
+GARMIN BINARY EXPLORER for Garmin GPS Receivers that support serial I/O.
+
+Copyright (C) 2016 Norm Moulton
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+****************************************************************************/
 // Profile.h: interface for the CProfile class.
-//
-//////////////////////////////////////////////////////////////////////
 
-/*
-
-This class was originally modeled after the Windows API functions
-Write/GetProfileInt and Write/GetProfileString.
-
-This class stores its data in a user defined file in a format that
-crudely resembles XML.
-
-*/
-
-#if !defined(AFX_PROFILE_H__03005067_261F_4307_82A2_09DE57730117__INCLUDED_)
-#define AFX_PROFILE_H__03005067_261F_4307_82A2_09DE57730117__INCLUDED_
+#ifndef PROFILE_H__INCLUDED_
+#define PROFILE_H__INCLUDED_
 
 #if _MSC_VER > 1000
 #pragma once
@@ -36,6 +43,8 @@ public:
 
     CString GetFileName() const;
 
+private:
+
     typedef struct
     {
         CString strSection;
@@ -43,23 +52,21 @@ public:
         CString strValue;
     } t_ProfileEntry;
 
-private:
-
-    void _Dump();
     bool _AddEntry(CString strSection, CString strEntry, CString strValue);
     int _FindEntry(CString strSection, CString strEntry);
 
     void _ReadElement(CFile& file, CString& strSection, CString& strEntry, CString& strValue);
     void _WriteElement(CFile& file, CString strSection, CString strEntry, CString strValue);
 
+    // Data members
+
     // The maximum number of stored elements.
     enum { TABLE_SIZE = 16 };
 
-    // Data members
     t_ProfileEntry m_ProfileTable[TABLE_SIZE];
     CString m_strDataFullPath;
     bool m_bNeedsSave;
     const CString m_strDataFileName;
 };
 
-#endif // !defined(AFX_PROFILE_H__03005067_261F_4307_82A2_09DE57730117__INCLUDED_)
+#endif

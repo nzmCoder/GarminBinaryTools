@@ -1,3 +1,22 @@
+/****************************************************************************
+GARMIN BINARY EXPLORER for Garmin GPS Receivers that support serial I/O.
+
+Copyright (C) 2016 Norm Moulton
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+****************************************************************************/
 // GarminBinary.cpp : Defines the class behaviors for the application.
 //
 
@@ -27,7 +46,7 @@ END_MESSAGE_MAP()
 
 CGarminBinaryApp::CGarminBinaryApp()
 {
-    // TODO: add construction code here,
+    // Add construction code here
     // Place all significant initialization in InitInstance
 }
 
@@ -57,12 +76,12 @@ BOOL CGarminBinaryApp::InitInstance()
     int nResponse = dlg.DoModal();
     if(nResponse == IDOK)
     {
-        // TODO: Place code here to handle when the dialog is
+        //  Place code here to handle when the dialog is
         //  dismissed with OK
     }
     else if(nResponse == IDCANCEL)
     {
-        // TODO: Place code here to handle when the dialog is
+        //  Place code here to handle when the dialog is
         //  dismissed with Cancel
     }
 

@@ -1,3 +1,29 @@
+/****************************************************************************
+GARMIN BINARY EXPLORER for Garmin GPS Receivers that support serial I/O.
+
+Copyright (C) 2016 Norm Moulton
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+****************************************************************************/
+
+/****************************************************************************
+
+1.00   30 May 2016, First version
+
+****************************************************************************/
+
 // GarminBinaryDlg.h : header file
 //
 
@@ -17,37 +43,41 @@
 class CGarminBinaryDlg : public CDialog
 {
 public:
-    void AddToDisplay(CString str);
-    t_UINT8 m_lastRecv;
-    void AddToDisplay(CString strHdr, t_MSG_FORMAT *pMsg);
-    void ProcessFrame();
     // Construction
     CGarminBinaryDlg(CWnd* pParent = NULL); // standard constructor
 
-    void SetupPort();
+    BOOL PeekAndPump();
 
+    void SetupPort();
     void RecvMsg();
     void SendMsg();
 
+    void ProcessFrame();
     CString DecodeMsgBuff(t_MSG_FORMAT* pMsg);
-    void DisplayMsg(t_MSG_FORMAT *pMsg);
     void ClearMsgBuff(t_MSG_FORMAT* pMsg);
-
+    void DisplayMsg(t_MSG_FORMAT *pMsg);
     t_UINT8 CalcChksum(t_MSG_FORMAT* pMsg);
+    void AddToDisplay(CString strHdr, t_MSG_FORMAT *pMsg);
+    void UpdateMsgSeen();
+    void UpdateErrSeen();
+    void ConfirmHighBaud();
 
-    BOOL PeekAndPump();
-
-    void Test();
 
     // Data
     t_MSG_FORMAT m_SendMsg;
     t_MSG_FORMAT m_RecvMsg;
     char* m_pRcv;
+    t_UINT8 m_lastRecv;
+    unsigned int mMsgsSeen[0x100];
+    unsigned int mErrFrames;
 
 
 // Dialog Data
     //{{AFX_DATA(CGarminBinaryDlg)
     enum { IDD = IDD_MAIN_DLG };
+    CStatic m_statErrFrames;
+    CStatic m_statBaud;
+    CStatic m_statMsgIdSeen;
     CStatic m_statGpsId;
     CButton m_chkTimer;
     CEdit   m_editMsgs;
@@ -82,7 +112,8 @@ protected:
     afx_msg void OnBtnClear();
     afx_msg void OnBtnPosOn();
     afx_msg void OnBtnPosOff();
-    afx_msg void OnBtnPosRmd();
+    afx_msg void OnBtnBaud();
+    afx_msg void OnBtnAbout();
     //}}AFX_MSG
     DECLARE_MESSAGE_MAP()
 

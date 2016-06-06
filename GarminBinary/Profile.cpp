@@ -1,6 +1,23 @@
+/****************************************************************************
+GARMIN BINARY EXPLORER for Garmin GPS Receivers that support serial I/O.
+
+Copyright (C) 2016 Norm Moulton
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+****************************************************************************/
 // Profile.cpp: implementation of the CProfile class.
-//
-//////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
 #include "Profile.h"
@@ -10,10 +27,9 @@
 static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
-
-//////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Construction/Destruction
-//////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 
 CProfile::CProfile(CString strDataFileName):
     m_strDataFileName(strDataFileName),
@@ -23,14 +39,15 @@ CProfile::CProfile(CString strDataFileName):
     // in the the Windows OnInitDialog function
 }
 
+/////////////////////////////////////////////////////////////////////////////
 CProfile::~CProfile()
 {
-    // only worry about saving to file if the profile was written during this lifetime
+    // Only save to file if the profile was changed.
     if(m_bNeedsSave)
     {
         CFile file;
 
-        // try to save the profile array to the storage file
+        // Save the profile array to the storage file.
         if(!file.Open(m_strDataFullPath, CFile::modeCreate | CFile::modeWrite))
         {
             AfxMessageBox("Data settings could not be saved at: "
@@ -38,12 +55,10 @@ CProfile::~CProfile()
         }
         else
         {
-            //      AfxMessageBox("Data settings were saved at: "
-            //          + m_strDataFullPath, MB_ICONINFORMATION);
-
-            //  write XML header
+            // Write XML header.
             CString str;
-            str = "<?xml version=\"1.0\"?>\r\n<!-- This file contains persistent data for the application -->\r\n<data>\r\n";
+            str = "<?xml version=\"1.0\"?>\r\n<!-- This file contains"\
+                  " persistent data for the application -->\r\n<data>\r\n";
             file.Write(str, str.GetLength());
 
             int i;
@@ -55,8 +70,7 @@ CProfile::~CProfile()
                               m_ProfileTable[i].strValue);
             }
 
-            //  write XML footer
-
+            // Write XML footer.
             str = "</data>\r\n";
             file.Write(str, str.GetLength());
 
@@ -65,47 +79,44 @@ CProfile::~CProfile()
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////
 void CProfile::Init()
 {
-    // keep track of whether the profile was written to during this object lifetime
+    // Keep track whether the profile was changed.
     m_bNeedsSave = false;
     CFile file;
 
-    // try to load the profile array from the storage file
+    // Load the profile array from the storage file.
     if(!file.Open(m_strDataFileName, CFile::modeRead))
     {
+        // File didn't open properly so just set the filename.
+        // we will create a new file later at destruction time.
         m_strDataFullPath = file.GetFilePath();
-        //AfxMessageBox("New data file will be created at: "
-        //  + m_strDataFullPath, MB_ICONINFORMATION);
     }
     else
     {
+        // Open the existing file and read in the data.
         m_strDataFullPath = file.GetFilePath();
 
-        int i;
-
-        for(i=0; i<TABLE_SIZE; ++i)
+        for(int i=0; i<TABLE_SIZE; ++i)
         {
             _ReadElement(file, m_ProfileTable[i].strSection, m_ProfileTable[i].strEntry, m_ProfileTable[i].strValue);
         }
 
         file.Close();
     }
-//  _Dump();
 }
 
+/////////////////////////////////////////////////////////////////////////////
 void CProfile::ClearProfile()
 {
     CFile file;
 
     // delete the INI file
     file.Remove(m_strDataFullPath);
-
-//  AfxMessageBox("Data settings were cleared at: "
-//          + m_strDataFullPath, MB_ICONINFORMATION);
 }
 
-
+/////////////////////////////////////////////////////////////////////////////
 UINT CProfile::GetProfileInt(CString strSection, CString strEntry, int nDefault)
 {
     UINT nValue = nDefault;
@@ -120,6 +131,7 @@ UINT CProfile::GetProfileInt(CString strSection, CString strEntry, int nDefault)
     return nValue;
 }
 
+/////////////////////////////////////////////////////////////////////////////
 bool CProfile::WriteProfileInt(CString strSection, CString strEntry, int nValue)
 {
     bool bResult = true;
@@ -149,6 +161,7 @@ bool CProfile::WriteProfileInt(CString strSection, CString strEntry, int nValue)
     return bResult;
 }
 
+/////////////////////////////////////////////////////////////////////////////
 CString CProfile::GetProfileStr(CString strSection, CString strEntry, CString strDefault)
 {
     CString strValue = strDefault;
@@ -163,6 +176,7 @@ CString CProfile::GetProfileStr(CString strSection, CString strEntry, CString st
     return strValue;
 }
 
+/////////////////////////////////////////////////////////////////////////////
 bool CProfile::WriteProfileStr(CString strSection, CString strEntry, CString strValue)
 {
     bool bResult = true;
@@ -189,12 +203,20 @@ bool CProfile::WriteProfileStr(CString strSection, CString strEntry, CString str
     return bResult;
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// PRIVATE FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////
+CString CProfile::GetFileName() const
+{
+    return m_strDataFullPath;
+}
 
-// return index of found entry, -1 if not found
+/////////////////////////////////////////////////////////////////////////////
+// PRIVATE FUNCTIONS
+/////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
 int CProfile::_FindEntry(CString strSection, CString strEntry)
 {
+    // return index of found entry, -1 if not found
     int nFoundIdx = -1;
 
     int i;
@@ -212,6 +234,7 @@ int CProfile::_FindEntry(CString strSection, CString strEntry)
     return nFoundIdx;
 }
 
+/////////////////////////////////////////////////////////////////////////////
 bool CProfile::_AddEntry(CString strSection, CString strEntry, CString strValue)
 {
     bool bResult = false;
@@ -235,34 +258,7 @@ bool CProfile::_AddEntry(CString strSection, CString strEntry, CString strValue)
     return bResult;
 }
 
-// For debugging only
-void CProfile::_Dump()
-{
-    int i;
-    CString str;
-    CString strIdx;
-
-    str = m_strDataFullPath;
-    str += "\r\n";
-
-    for(i=0; i<40; ++i)
-    {
-        strIdx.Format("[%d]", i);
-        str += strIdx;
-
-        str += m_ProfileTable[i].strSection;
-        str += ", ";
-
-        str += m_ProfileTable[i].strEntry;
-        str += ", ";
-
-        str += m_ProfileTable[i].strValue;
-        str += "\r\n";
-    }
-
-    AfxMessageBox(str);
-}
-
+/////////////////////////////////////////////////////////////////////////////
 void CProfile::_ReadElement(CFile& file, CString& strSection, CString& strEntry, CString& strValue)
 {
     // assume valid until an error is found
@@ -324,6 +320,7 @@ void CProfile::_ReadElement(CFile& file, CString& strSection, CString& strEntry,
 
 }
 
+/////////////////////////////////////////////////////////////////////////////
 void CProfile::_WriteElement(CFile& file, CString strSection, CString strEntry, CString strValue)
 {
     CString str;
@@ -333,9 +330,4 @@ void CProfile::_WriteElement(CFile& file, CString strSection, CString strEntry, 
                strValue);
 
     file.Write(str, str.GetLength());
-}
-
-CString CProfile::GetFileName() const
-{
-    return m_strDataFullPath;
 }
