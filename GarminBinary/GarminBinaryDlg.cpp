@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Serial.h"
 #include "Profile.h"
 #include "Windows.h"
+#include "Mmsystem.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -40,9 +41,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static char THIS_FILE[] = __FILE__;
 #endif
 
+// With a 1 mSec timer at 115200 baud, a maximum of 12 chars
+// could be pending prior to reading, in the worst case.
+// My USB to RS-232 device has a 16 byte buffer, so okay.
+#define _RECV_SERIAL_TIMER_MSECS 1
 #define _RECV_SERIAL_TIMER 1
-#define _RECV_SERIAL_TIMER_MSECS 15  // at 38400 baud, max 57.6 chars pending
-
 
 // Serial driver
 CSerial m_Serial;
@@ -257,8 +260,8 @@ void CGarminBinaryDlg::OnOK()
 /////////////////////////////////////////////////////////////////////////////
 void CGarminBinaryDlg::OnCancel()
 {
-    // There is nothing to do.
-    // The destructors will clean up everything.
+    // Before we go, undo the increased Windows timer resolution.
+    timeEndPeriod(1);
 
     CDialog::OnCancel();
 }
@@ -316,6 +319,13 @@ BOOL CGarminBinaryDlg::OnInitDialog()
                       DEFAULT_CHARSET, OUT_CHARACTER_PRECIS, CLIP_CHARACTER_PRECIS,
                       DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, "Fixedsys");
     m_editMsgs.SetFont(&m_Font, TRUE);
+
+    // Attempt to increase the systemwide Windows timer resolution.
+    if(timeBeginPeriod(_RECV_SERIAL_TIMER_MSECS) != TIMERR_NOERROR)
+    {
+        AfxMessageBox("Failed to set a faster Windows timer.\r\n"\
+                      "You may see more framing errors.");
+    }
 
     // Start the serial receive polling timer.
     SetTimer(_RECV_SERIAL_TIMER, _RECV_SERIAL_TIMER_MSECS, NULL);
@@ -469,9 +479,10 @@ void CGarminBinaryDlg::OnBtnBaud()
     // Newer Garmin GPS receivers seem to support these rates:
     // 9600, 19200, 38400, 57600, 115200
     // Older receivers are reported to support only up to 38400.
-    // For our purposes, 38400 seems fast enough, go with that.
 
-    unsigned int baud = 38400;
+    //unsigned int baud = 38400;
+    //unsigned int baud = 19200;
+    unsigned int baud = 115200;
 
     // Little endien
     m_SendMsg.Payload[0] = baud;
@@ -525,7 +536,10 @@ void CGarminBinaryDlg::SetupPort()
         // This format is "fully qualified" and always works.
         CString str;
         str.Format("\\\\.\\%s", m_strSerialPort);
-        if(0 != m_Serial.Open(str))
+
+		// Open the port and suggest to the driver to use large buffers.
+        // But the actual buffer size is constrained by the hardware.
+        if(0 != m_Serial.Open(str, 4096, 4096))
         {
             // Report the error to the user.
             str = "Unable to open port " + m_strSerialPort;
@@ -831,7 +845,7 @@ void CGarminBinaryDlg::UpdateErrSeen()
 // This method confirms a baud rate change in accordance with the procedure
 // documented in Garmin GPS18x Technical Specifications, Appendix C.
 // I assume this may work for most Garmin GPS receivers in serial mode.
-// I have confirmed it works with the GPS V and GPS 60CSx.
+// I have confirmed it works with the eTrex Vista, GPS V and GPS 60CSx.
 /////////////////////////////////////////////////////////////////////////////
 void CGarminBinaryDlg::ConfirmHighBaud()
 {
@@ -847,24 +861,33 @@ void CGarminBinaryDlg::ConfirmHighBaud()
 
     // According to Garmin, the confirmed baud should be within
     // plus or minus 5% of the requested value.  Check that here.
-    // e.g. GPS60CSx confirms at 38461, GPS V confirms at 37889.
-    if(baud < 38400 -  1920 || baud > 38400 + 1920)
+    // e.g. GPS60CSx confirms 38400 at 38461, GPS V confirms at 37889.
+    // e.g. eTrex Vista confirms 115200 at 113668
+//  if(baud < 38400  - 1920 || baud > 38400 + 1920)
+//  if(baud < 19200  -  960 || baud > 19200 + 960)
+    if(baud < 115200 - 5760 || baud > 115200 + 5760)
     {
         AfxMessageBox("High Baud did not work!");
+
+        // Ending the process here without sending the confirmations
+        // below lets the GPS's 2 second window elapse, and it will
+        // automatically revert to the former baud rate.
         return;
     }
 
     // Display the "standard" baud, not the confirmed number.
-    m_statBaud.SetWindowText("38400");
+    m_statBaud.SetWindowText("115200");
 
     // Send ACK of baud change msg.
     OnBtnAck();
 
-    // Garmin says to wait 100 mSec here.
-    Sleep(100);
+    // Garmin says to wait at least 100 mSec here.
+    Sleep(150);
 
     // Now change our local baud rate.
-    m_Serial.Setup(CSerial::EBaud38400, CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
+    m_Serial.Setup(CSerial::EBaud115200, CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
+    //m_Serial.Setup(CSerial::EBaud19200, CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
+    //m_Serial.Setup(CSerial::EBaud38400, CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
     m_Serial.SetupHandshaking(CSerial::EHandshakeOff);
     m_Serial.SetupReadTimeouts(CSerial::EReadTimeoutNonblocking);
     m_Serial.Purge();
@@ -883,8 +906,8 @@ void CGarminBinaryDlg::ConfirmHighBaud()
 
     SendMsg();
 
-    // I'm cheating here, not listening for response, just waiting
-    // a bit then blindly sending again, but it works fine.
+    // I'm cheating here, not listening for a response,
+    // just blindly sending again, but it seems to work.
     Sleep(100);
 
     // Transmit a second confirmation at new baud rate.
@@ -900,5 +923,8 @@ void CGarminBinaryDlg::ConfirmHighBaud()
     m_SendMsg.End2       = 0x03;
 
     SendMsg();
+
+	// This whole process must complete in less than 2 seconds
+    // or the GPS will revert to the old baud rate.
 }
 
