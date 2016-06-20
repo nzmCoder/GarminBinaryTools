@@ -43,6 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class CGarminBinaryDlg : public CDialog
 {
 public:
+
     // Construction
     CGarminBinaryDlg(CWnd* pParent = NULL); // standard constructor
 
@@ -60,26 +61,30 @@ public:
     void AddToDisplay(CString strHdr, t_MSG_FORMAT *pMsg);
     void UpdateMsgSeen();
     void UpdateErrSeen();
-    void ConfirmHighBaud();
-
-
-    // Data
-    t_MSG_FORMAT m_SendMsg;
-    t_MSG_FORMAT m_RecvMsg;
-    char* m_pRcv;
-    t_UINT8 m_lastRecv;
-    unsigned int mMsgsSeen[0x100];
-    unsigned int mErrFrames;
+    void ConfirmNewBaud();
+    void DecodeLatLon();
+    CString DecodeUTC();
+    void DecodePVT();
+    void AddToLogFile();
+    void UpdateHighWater();
+    void UpdateAsyncMask();
+    CString Latitude2Str(double lat);
+    CString Longitude2Str(double lon);
 
 
 // Dialog Data
     //{{AFX_DATA(CGarminBinaryDlg)
     enum { IDD = IDD_MAIN_DLG };
+    CStatic m_statWaterLn;
+    CButton m_btnBaudLocal;
+    CStatic m_statMask;
+    CStatic m_statGpsFix;
+    CStatic m_statLatLon;
+    CStatic m_statUTC;
     CStatic m_statErrFrames;
     CStatic m_statBaud;
     CStatic m_statMsgIdSeen;
     CStatic m_statGpsId;
-    CButton m_chkTimer;
     CEdit   m_editMsgs;
     CComboBox   m_cmboPort;
     //}}AFX_DATA
@@ -105,21 +110,41 @@ protected:
     virtual void OnOK();
     afx_msg void OnCloseupCmboPort();
     afx_msg void OnTimer(UINT nIDEvent);
-    afx_msg void OnCheck();
     afx_msg void OnBtnStartAsync();
     afx_msg void OnBtnStopAsync();
     afx_msg void OnBtnAck();
     afx_msg void OnBtnClear();
     afx_msg void OnBtnPosOn();
     afx_msg void OnBtnPosOff();
-    afx_msg void OnBtnBaud();
     afx_msg void OnBtnAbout();
+    afx_msg void OnBtnLogOn();
+    afx_msg void OnBtnLogOff();
+    afx_msg void OnBtnGetLatLon();
+    afx_msg void OnBtnGetUTC();
+    afx_msg void OnBtnBaudUp();
+    afx_msg void OnBtnBaudDn();
+    afx_msg void OnBtnBaudLocal();
     //}}AFX_MSG
     DECLARE_MESSAGE_MAP()
 
 private:
 
+    // Data
     CString m_strSerialPort;
+
+    t_MSG_FORMAT m_SendMsg;
+    t_MSG_FORMAT m_RecvMsg;
+    char* m_pRcv;
+    t_UINT8 m_lastRecv;
+    unsigned int mMsgsSeen[0x100];
+    unsigned int mErrFrames;
+
+    t_UINT16 mMask;
+    bool m_bIsLogging;
+
+    unsigned int mHighWater;
+    CFile m_OutFile;
+    HICON m_hIconBtn;
     CFont m_Font;
 
 };

@@ -48,6 +48,11 @@ CGarminBinaryApp::CGarminBinaryApp()
 {
     // Add construction code here
     // Place all significant initialization in InitInstance
+
+    // Force this process to use only a single CPU on a multi-core PC.
+    // This makes serial I/O more reliable.
+    HANDLE process = GetCurrentProcess();
+    (void)SetProcessAffinityMask(process, 1);
 }
 
 /////////////////////////////////////////////////////////////////////////////

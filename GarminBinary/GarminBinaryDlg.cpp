@@ -20,6 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /****************************************************************************
 
+1.10   19 Jun 2016, Serial communications works well.  No framing errors
+       when tested on eTrex Vista, GPS V, and 60CSx.
+
 1.00   30 May 2016, First version
 
 ****************************************************************************/
@@ -41,10 +44,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static char THIS_FILE[] = __FILE__;
 #endif
 
-// With a 1 mSec timer at 115200 baud, a maximum of 12 chars
-// could be pending prior to reading, in the worst case.
-// My USB to RS-232 device has a 16 byte buffer, so okay.
+// Set the millisecond timer period for fetching serial bytes
 #define _RECV_SERIAL_TIMER_MSECS 1
+
+// Define an ID for the timer
 #define _RECV_SERIAL_TIMER 1
 
 // Serial driver
@@ -150,11 +153,16 @@ void CGarminBinaryDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialog::DoDataExchange(pDX);
     //{{AFX_DATA_MAP(CGarminBinaryDlg)
+    DDX_Control(pDX, IDC_STAT_WTRLINE, m_statWaterLn);
+    DDX_Control(pDX, IDC_BTN_BAUD_LOCAL, m_btnBaudLocal);
+    DDX_Control(pDX, IDC_STAT_MASK, m_statMask);
+    DDX_Control(pDX, IDC_STAT_GPSFIX, m_statGpsFix);
+    DDX_Control(pDX, IDC_STAT_LATLON, m_statLatLon);
+    DDX_Control(pDX, IDC_STAT_UTC, m_statUTC);
     DDX_Control(pDX, IDC_STAT_ERR_FRMS, m_statErrFrames);
     DDX_Control(pDX, IDC_STAT_BAUD, m_statBaud);
     DDX_Control(pDX, IDC_STAT_MSG_ID_SEEN, m_statMsgIdSeen);
     DDX_Control(pDX, IDC_STAT_GPS_ID_RSP, m_statGpsId);
-    DDX_Control(pDX, IDC_CHECK1, m_chkTimer);
     DDX_Control(pDX, IDC_EDIT_MSGS, m_editMsgs);
     DDX_Control(pDX, IDC_CMBO_PORT, m_cmboPort);
     //}}AFX_DATA_MAP
@@ -168,15 +176,20 @@ BEGIN_MESSAGE_MAP(CGarminBinaryDlg, CDialog)
     ON_BN_CLICKED(IDC_BTN_GET_ID, OnBtnGetId)
     ON_CBN_CLOSEUP(IDC_CMBO_PORT, OnCloseupCmboPort)
     ON_WM_TIMER()
-    ON_BN_CLICKED(IDC_CHECK1, OnCheck)
     ON_BN_CLICKED(IDC_BTN_START_ASYNC, OnBtnStartAsync)
     ON_BN_CLICKED(IDC_BTN_STOP_ASYNC, OnBtnStopAsync)
     ON_BN_CLICKED(IDC_BTN_ACK, OnBtnAck)
     ON_BN_CLICKED(IDC_BTN_CLEAR, OnBtnClear)
     ON_BN_CLICKED(IDC_BTN_POS_ON, OnBtnPosOn)
     ON_BN_CLICKED(IDC_BTN_POS_OFF, OnBtnPosOff)
-    ON_BN_CLICKED(IDC_BTN_BAUD, OnBtnBaud)
     ON_BN_CLICKED(IDC_BTN_ABOUT, OnBtnAbout)
+    ON_BN_CLICKED(IDC_BTN_LOG_ON, OnBtnLogOn)
+    ON_BN_CLICKED(IDC_BTN_LOG_OFF, OnBtnLogOff)
+    ON_BN_CLICKED(IDC_BTN_GET_LATLON, OnBtnGetLatLon)
+    ON_BN_CLICKED(IDC_BTN_GET_UTC, OnBtnGetUTC)
+    ON_BN_CLICKED(IDC_BTN_BAUD_UP, OnBtnBaudUp)
+    ON_BN_CLICKED(IDC_BTN_BAUD_DN, OnBtnBaudDn)
+    ON_BN_CLICKED(IDC_BTN_BAUD_LOCAL, OnBtnBaudLocal)
     //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -329,10 +342,22 @@ BOOL CGarminBinaryDlg::OnInitDialog()
 
     // Start the serial receive polling timer.
     SetTimer(_RECV_SERIAL_TIMER, _RECV_SERIAL_TIMER_MSECS, NULL);
-    m_chkTimer.SetCheck(BST_CHECKED);
 
     memset(mMsgsSeen, 0, sizeof(mMsgsSeen));
     mErrFrames = 0;
+    mHighWater = 0;
+
+    m_bIsLogging = false;
+
+    // This turns on only async messages 36, 37, 38
+    mMask = 0x0020;
+
+//    mBaseTime = CTime(1990, 1, 1, 0, 0, 0);
+
+    // Set a custom icon for the Baud Sync button
+    m_hIconBtn = AfxGetApp()->LoadIcon(IDI_ICON_BAUD);
+    m_btnBaudLocal.ModifyStyle(0, BS_ICON);
+    m_btnBaudLocal.SetIcon(m_hIconBtn);
 
     return TRUE;
 }
@@ -357,20 +382,6 @@ void CGarminBinaryDlg::OnCloseupCmboPort()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void CGarminBinaryDlg::OnCheck()
-{
-    if(BST_CHECKED == m_chkTimer.GetCheck())
-    {
-        // Start the serial receive polling timer.
-        SetTimer(_RECV_SERIAL_TIMER, _RECV_SERIAL_TIMER_MSECS, NULL);
-    }
-    else
-    {
-        KillTimer(_RECV_SERIAL_TIMER);
-    }
-}
-
-/////////////////////////////////////////////////////////////////////////////
 void CGarminBinaryDlg::OnBtnClear()
 {
     // clear the window of received messages
@@ -379,8 +390,12 @@ void CGarminBinaryDlg::OnBtnClear()
     // clear the list of seen messages
     memset(mMsgsSeen, 0, sizeof(mMsgsSeen));
     m_statMsgIdSeen.SetWindowText("");
+
     mErrFrames = 0;
     UpdateErrSeen();
+
+    mHighWater = 0;
+    UpdateHighWater();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -402,13 +417,15 @@ void CGarminBinaryDlg::OnBtnGetId()
 /////////////////////////////////////////////////////////////////////////////
 void CGarminBinaryDlg::OnBtnStartAsync()
 {
+    UpdateAsyncMask();
+
     ClearMsgBuff(&m_SendMsg);
 
     m_SendMsg.Start      = 0x10;
-    m_SendMsg.CmdId      = MSG_ASYNC;
+    m_SendMsg.CmdId      = MSG_ASYNC_CMD;
     m_SendMsg.SizeBytes  = 0x02;
-    m_SendMsg.Payload[0] = 0xFF;
-    m_SendMsg.Payload[1] = 0xFF;
+    m_SendMsg.Payload[0] = (char)mMask; // 0xFF;
+    m_SendMsg.Payload[1] = (char)mMask >> 8; // 0xFF;
     m_SendMsg.ChkSum     = CalcChksum(&m_SendMsg);
     m_SendMsg.End1       = 0x10;
     m_SendMsg.End2       = 0x03;
@@ -422,7 +439,7 @@ void CGarminBinaryDlg::OnBtnStopAsync()
     ClearMsgBuff(&m_SendMsg);
 
     m_SendMsg.Start      = 0x10;
-    m_SendMsg.CmdId      = MSG_ASYNC;
+    m_SendMsg.CmdId      = MSG_ASYNC_CMD;
     m_SendMsg.SizeBytes  = 0x02;
     m_SendMsg.Payload[0] = 0x00;
     m_SendMsg.Payload[1] = 0x00;
@@ -439,9 +456,9 @@ void CGarminBinaryDlg::OnBtnPosOn()
     ClearMsgBuff(&m_SendMsg);
 
     m_SendMsg.Start      = 0x10;
-    m_SendMsg.CmdId      = 0x0A;
+    m_SendMsg.CmdId      = MSG_QUERY;
     m_SendMsg.SizeBytes  = 0x02;
-    m_SendMsg.Payload[0] = 0x31;  // PVT (Position, Velocity, Time) On
+    m_SendMsg.Payload[0] = QUERY_POS_ON;
     m_SendMsg.Payload[1] = 0x00;
     m_SendMsg.ChkSum     = CalcChksum(&m_SendMsg);
     m_SendMsg.End1       = 0x10;
@@ -456,9 +473,9 @@ void CGarminBinaryDlg::OnBtnPosOff()
     ClearMsgBuff(&m_SendMsg);
 
     m_SendMsg.Start      = 0x10;
-    m_SendMsg.CmdId      = 0x0A;
+    m_SendMsg.CmdId      = MSG_QUERY;
     m_SendMsg.SizeBytes  = 0x02;
-    m_SendMsg.Payload[0] = 0x32;  // PVT (Position, Velocity, Time) Off
+    m_SendMsg.Payload[0] = QUERY_POS_OFF;
     m_SendMsg.Payload[1] = 0x00;
     m_SendMsg.ChkSum     = CalcChksum(&m_SendMsg);
     m_SendMsg.End1       = 0x10;
@@ -468,28 +485,66 @@ void CGarminBinaryDlg::OnBtnPosOff()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void CGarminBinaryDlg::OnBtnBaud()
+void CGarminBinaryDlg::OnBtnLogOn()
+{
+    CString strFileName;
+
+    // Display "Save As" Dialog
+    CFileDialog dlg(FALSE, NULL, "",
+                    OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY,
+                    "G12 Files (*.g12)|*.g12|All Files (*.*)|*.*||");
+    dlg.m_ofn.lpstrTitle = "Save G12 Format Log file";
+
+    if(dlg.DoModal() == IDOK)
+    {
+        strFileName = dlg.GetPathName();
+
+        if(!m_OutFile.Open(strFileName, CFile::modeCreate | CFile::modeWrite | CFile::typeBinary))
+        {
+            CString str;
+            str.Format("Cannot write file: %s", strFileName);
+            AfxMessageBox(str);
+            return;
+        }
+        m_bIsLogging = true;
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+void CGarminBinaryDlg::OnBtnLogOff()
+{
+    m_bIsLogging = false;
+//  m_OutFile.Write("end", 3);
+    m_OutFile.Close();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+void CGarminBinaryDlg::OnBtnGetLatLon()
 {
     ClearMsgBuff(&m_SendMsg);
 
     m_SendMsg.Start      = 0x10;
-    m_SendMsg.CmdId      = 0x30;
-    m_SendMsg.SizeBytes  = 0x04;
+    m_SendMsg.CmdId      = MSG_QUERY;
+    m_SendMsg.SizeBytes  = 0x02;
+    m_SendMsg.Payload[0] = QUERY_LATLON;
+    m_SendMsg.Payload[1] = 0x00;
+    m_SendMsg.ChkSum     = CalcChksum(&m_SendMsg);
+    m_SendMsg.End1       = 0x10;
+    m_SendMsg.End2       = 0x03;
 
-    // Newer Garmin GPS receivers seem to support these rates:
-    // 9600, 19200, 38400, 57600, 115200
-    // Older receivers are reported to support only up to 38400.
+    SendMsg();
+}
 
-    //unsigned int baud = 38400;
-    //unsigned int baud = 19200;
-    unsigned int baud = 115200;
+/////////////////////////////////////////////////////////////////////////////
+void CGarminBinaryDlg::OnBtnGetUTC()
+{
+    ClearMsgBuff(&m_SendMsg);
 
-    // Little endien
-    m_SendMsg.Payload[0] = baud;
-    m_SendMsg.Payload[1] = baud >> 8;
-    m_SendMsg.Payload[2] = baud >> 16;
-    m_SendMsg.Payload[3] = baud >> 24;
-
+    m_SendMsg.Start      = 0x10;
+    m_SendMsg.CmdId      = MSG_QUERY;
+    m_SendMsg.SizeBytes  = 0x02;
+    m_SendMsg.Payload[0] = QUERY_UTC;
+    m_SendMsg.Payload[1] = 0x00;
     m_SendMsg.ChkSum     = CalcChksum(&m_SendMsg);
     m_SendMsg.End1       = 0x10;
     m_SendMsg.End2       = 0x03;
@@ -537,7 +592,7 @@ void CGarminBinaryDlg::SetupPort()
         CString str;
         str.Format("\\\\.\\%s", m_strSerialPort);
 
-		// Open the port and suggest to the driver to use large buffers.
+        // Open the port and suggest to the driver to use large buffers.
         // But the actual buffer size is constrained by the hardware.
         if(0 != m_Serial.Open(str, 4096, 4096))
         {
@@ -593,8 +648,8 @@ void CGarminBinaryDlg::RecvMsg()
     DWORD bytesRead = 0;
     t_UINT8 byte = 0;
     int nTime = 0;
-    CString str, strEdit;
     static t_UINT8 sLastbyte = 0;
+    unsigned int nNum = 0;
 
     // See if there is a byte to read.
     m_Serial.Read(&byte, 1, &bytesRead);
@@ -602,11 +657,13 @@ void CGarminBinaryDlg::RecvMsg()
     // If we read any bytes, keep reading until buffer is empty.
     while(bytesRead)
     {
+        // incr number bytes seen in this grouping
+        ++nNum;
+
         // This part finds DLEs and end of frames.
         if(sLastbyte == 0x10 && byte == 0x10)
         {
             // A second DLE was found.
-            str = "";
 
             // Set sLastbyte to some neutral value.
             sLastbyte = 0;
@@ -614,9 +671,6 @@ void CGarminBinaryDlg::RecvMsg()
         else if(sLastbyte == 0x10 && byte == 0x03)
         {
             // It is the end of frame.
-
-            // Add CR, LF.
-            str.Format("%02X\r\n", byte);
 
             // Call helper function.
             ProcessFrame();
@@ -628,10 +682,18 @@ void CGarminBinaryDlg::RecvMsg()
         {
             // It is a normal mid-frame byte.
 
-            str.Format("%02X ", byte);
-
             // Add byte, then advance pointer.
             *m_pRcv++ = byte;
+
+            // Do not allow the pointer to overrun buffer size
+            if(m_pRcv >= ((char*)&m_RecvMsg) + sizeof(m_RecvMsg))
+            {
+                // This message has an error; no end of frame was seen.
+                // Reset the pointer to the start of the buffer.
+                // This packet won't be valid, but the error will be
+                // handled as usual in the ProcessFrame function.
+                m_pRcv = (char*)&m_RecvMsg;
+            }
 
             // Remember sLastbyte.
             sLastbyte = byte;
@@ -639,17 +701,22 @@ void CGarminBinaryDlg::RecvMsg()
 
         m_Serial.Read(&byte, 1, &bytesRead);
     }
+
+    // Check if we reached a new high water mark.
+    if(nNum > mHighWater)
+    {
+        mHighWater = nNum;
+        UpdateHighWater();
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////
 t_UINT8 CGarminBinaryDlg::CalcChksum(t_MSG_FORMAT *pMsg)
 {
-    t_UINT8
-
     // Chksum calculated over CmdId, Size, and payload only.
 
     // Sum up the byte values.
-    val = pMsg->CmdId;
+    t_UINT8 val = pMsg->CmdId;
     val += pMsg->SizeBytes;
 
     // Add sum of payload bytes, if any.
@@ -706,6 +773,157 @@ CString CGarminBinaryDlg::DecodeMsgBuff(t_MSG_FORMAT *pMsg)
 }
 
 /////////////////////////////////////////////////////////////////////////////
+CString CGarminBinaryDlg::DecodeUTC()
+{
+    CString strValue;
+
+#pragma pack(1)
+    typedef struct
+    {
+        t_UINT8  month;
+        t_UINT8  day;
+        t_UINT16 year;
+        t_UINT8  hour;
+        t_UINT8  unused;
+        t_UINT8  minute;
+        t_UINT8  second;
+    } t_GPS_UTC;
+
+    // Recast the payload to the structure format.
+    t_GPS_UTC* pUTC = (t_GPS_UTC*)m_RecvMsg.Payload;
+
+    // Construct a CTime object for current time.
+    CTime time = CTime(
+                     pUTC->year,
+                     pUTC->month,
+                     pUTC->day,
+                     pUTC->hour,
+                     pUTC->minute,
+                     pUTC->second);
+
+    // Format like: Sun 19-Jun-2016 07:05:24
+    strValue = time.Format("%a %d-%b-%Y %H:%M:%S");
+
+    m_statUTC.SetWindowText(strValue);
+
+    return strValue;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+CString CGarminBinaryDlg::Latitude2Str(double lat)
+{
+    CString strValue;
+
+    double latitude = lat * 180.0 / PI;
+
+    // Determine the letter.
+    char latLetter = 'N';
+
+    if(latitude < 0)
+    {
+        latLetter = 'S';
+        latitude = -latitude;
+    }
+
+    // Format a string value of the latitude letter and value.
+    strValue.Format("%c%2.6f", latLetter, latitude);
+
+    return strValue;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+CString CGarminBinaryDlg::Longitude2Str(double lon)
+{
+    CString strValue;
+
+    double longitude = lon * 180.0 / PI;
+
+    // Determine the letter.
+    char lonLetter = 'E';
+
+    if(longitude < 0)
+    {
+        lonLetter = 'W';
+        longitude = -longitude;
+    }
+
+    // Format a string value of the longitude letter and value.
+    strValue.Format("%c%2.6f", lonLetter, longitude);
+
+    return strValue;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+void CGarminBinaryDlg::DecodeLatLon()
+{
+#pragma pack(1)
+    typedef struct
+    {
+        double latitude;
+        double longitude;
+    } t_GPS_LATLON;
+
+    // Recast the payload to the structure format.
+    t_GPS_LATLON* pLatLon = (t_GPS_LATLON*)m_RecvMsg.Payload;
+
+    // Format a string of the full latitude and longitude values.
+    CString strValue;
+    strValue.Format("%s %s",
+                    Latitude2Str(pLatLon->latitude),
+                    Longitude2Str(pLatLon->longitude));
+
+    m_statLatLon.SetWindowText(strValue);
+
+}
+
+/////////////////////////////////////////////////////////////////////////////
+void CGarminBinaryDlg::DecodePVT()
+{
+#pragma pack(1)
+    typedef struct
+    {
+        float    alt;       // altitude above WGS 84 (meters)
+        float    epe;       // estimated position error, 2 sigma (meters)
+        float    eph;       // epe, but horizontal only (meters)
+        float    epv;       // epe but vertical only (meters )
+        t_UINT16 fix;       // 1- None, 2- 2D, 3- 3D, 4- 2D WAAS, 5- 3D WAAS
+        double   gps_tow;   // gps time of week (seconds)
+        double   lat;       // latitude (radians)
+        double   lon;       // longitude (radians)
+        float    lon_vel;   // velocity east (meters/second)
+        float    lat_vel;   // velocity north (meters/second)
+        float    alt_vel;   // velocity up (meters/sec)
+        float    msl_hght;  // height of WGS 84 above MSL (meters)
+        t_UINT16 leap_sec;  // diff between GPS and UTC (seconds)
+        t_UINT16 grmn_days; // days from UTC 31-December-1989 to last Sunday
+    } t_GPS_PVT_DATA;
+
+    // Recast the payload to the structure format.
+    t_GPS_PVT_DATA* pPVT = (t_GPS_PVT_DATA*)m_RecvMsg.Payload;
+
+    // Format a string of the fix value.
+    CString strValue;
+    strValue.Format("%d", pPVT->fix);
+    m_statGpsFix.SetWindowText(strValue);
+
+    // Format a string of the latitude and longitude.
+    strValue.Format("%s %s",
+                    Latitude2Str(pPVT->lat),
+                    Longitude2Str(pPVT->lon));
+    m_statLatLon.SetWindowText(strValue);
+
+    // Time is total seconds since midnight UTC 1-Jan-1990
+    CTime time = CTime(1989, 12, 31, 0, 0, 0, 1);
+    time += (unsigned int)pPVT->grmn_days * 86400
+            + (unsigned int)pPVT->gps_tow
+            - (unsigned int)pPVT->leap_sec;
+
+    // Format like: Sun 19-Jun-2016 07:05:24
+    strValue = time.Format("%a %d-%b-%Y %H:%M:%S");
+    m_statUTC.SetWindowText(strValue);
+}
+
+/////////////////////////////////////////////////////////////////////////////
 // A completed message frame has arrived.
 /////////////////////////////////////////////////////////////////////////////
 void CGarminBinaryDlg::ProcessFrame()
@@ -722,8 +940,8 @@ void CGarminBinaryDlg::ProcessFrame()
     m_RecvMsg.End1 = 0x10;
     m_RecvMsg.End2 = 0x03;
 
-    // The checksum in a received message is verified this way.
-    if(CalcChksum(&m_RecvMsg) - m_RecvMsg.ChkSum == 0)
+    // Verify start flag and checksum in the received message.
+    if((m_RecvMsg.Start == 0x10) && (CalcChksum(&m_RecvMsg) - m_RecvMsg.ChkSum == 0))
     {
         // A valid message has been parsed. Prepare to display it.
 
@@ -744,31 +962,54 @@ void CGarminBinaryDlg::ProcessFrame()
         }
 
         // Detect Baud rate change response.
-        if(m_RecvMsg.CmdId == 0x31)
+        if(m_RecvMsg.CmdId == MSG_BAUD_RSP)
         {
             // Special processing for baud rate change.
-            ConfirmHighBaud();
+            ConfirmNewBaud();
+        }
+
+        // Detect receiving UTC response.
+        if(m_RecvMsg.CmdId == MSG_UTC_RSP)
+        {
+            DecodeUTC();
+        }
+
+        // Detect receiving Lat/Lon position response.
+        if(m_RecvMsg.CmdId == MSG_LATLON_RSP)
+        {
+            DecodeLatLon();
+        }
+
+        // Detect receiving PVT response.
+        if(m_RecvMsg.CmdId == MSG_PVT_RSP)
+        {
+            DecodePVT();
         }
 
         // Display the received hex string.
         AddToDisplay("", &m_RecvMsg);
 
-        /*
-        switch(m_RecvMsg.CmdId)
+        // See if msg should be logged.
+        if(m_bIsLogging && (
+                    m_RecvMsg.CmdId == 0xFF ||
+                    m_RecvMsg.CmdId == 0x11 ||
+                    m_RecvMsg.CmdId == 0x0E ||
+                    m_RecvMsg.CmdId == 0x33 ||
+                    m_RecvMsg.CmdId == 0x36 ||
+                    m_RecvMsg.CmdId == 0x37 ||
+                    m_RecvMsg.CmdId == 0x38))
         {
-        //case 0x72:
-        case 0x99:
-        //case MSG_ACK:
-        //case MSG_ID_RSP:
-        //case MSG_ID_EXT:
-        //case MSG_PSEUD:
-          AddToDisplay("", &m_RecvMsg);
+            AddToLogFile();
         }
-        */
     }
     else
     {
-        AddToDisplay("BAD FRAME DROPPED", 0);
+        CString str;
+        str.Format("BAD FRAME: %02X %02X %02X . . .",
+                   m_RecvMsg.Start, m_RecvMsg.CmdId, m_RecvMsg.SizeBytes);
+
+        AddToDisplay(str, 0);
+
         ++mErrFrames;
         UpdateErrSeen();
     }
@@ -776,6 +1017,22 @@ void CGarminBinaryDlg::ProcessFrame()
     // Reset message buffer.
     ClearMsgBuff(&m_RecvMsg);
     m_pRcv = (char*)&m_RecvMsg;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+void CGarminBinaryDlg::AddToLogFile()
+{
+    // This outputs the bytes that appear in the G12 file format.
+    if(m_bIsLogging)
+    {
+        m_OutFile.Write(&m_RecvMsg.CmdId, 1);
+        m_OutFile.Write(&m_RecvMsg.SizeBytes, 1);
+
+        for(int i = 0; i < m_RecvMsg.SizeBytes; ++i)
+        {
+            m_OutFile.Write(&m_RecvMsg.Payload[i], 1);
+        }
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -791,7 +1048,7 @@ void CGarminBinaryDlg::AddToDisplay(CString strHdr, t_MSG_FORMAT* pMsg = 0)
     int nLength = m_editMsgs.GetWindowTextLength();
 
     // Somewhat arbitrary limit on output window.
-    static const nLimit = 20000;
+    static const nLimit = 5000;
     static const nDelCount = 1000;
 
     if(nLength >= nLimit)
@@ -842,12 +1099,80 @@ void CGarminBinaryDlg::UpdateErrSeen()
 }
 
 /////////////////////////////////////////////////////////////////////////////
+void CGarminBinaryDlg::UpdateHighWater()
+{
+    CString str;
+    str.Format("%d", mHighWater);
+    m_statWaterLn.SetWindowText(str);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+void CGarminBinaryDlg::UpdateAsyncMask()
+{
+    if(mMask == 0) mMask = 1;
+
+    CString str;
+    str.Format("0x%04X", mMask);
+    m_statMask.SetWindowText(str);
+}
+
+// Newer Garmin GPS receivers seem to support these rates:
+// 9600, 19200, 38400, 57600, 115200
+// Older receivers are reported to support only up to 38400.
+
+/////////////////////////////////////////////////////////////////////////////
+void CGarminBinaryDlg::OnBtnBaudUp()
+{
+    ClearMsgBuff(&m_SendMsg);
+
+    m_SendMsg.Start      = 0x10;
+    m_SendMsg.CmdId      = MSG_BAUD_CMD;
+    m_SendMsg.SizeBytes  = 0x04;
+    unsigned int baud    = 57600;
+
+    // Little endien
+    m_SendMsg.Payload[0] = baud;
+    m_SendMsg.Payload[1] = baud >> 8;
+    m_SendMsg.Payload[2] = baud >> 16;
+    m_SendMsg.Payload[3] = baud >> 24;
+
+    m_SendMsg.ChkSum     = CalcChksum(&m_SendMsg);
+    m_SendMsg.End1       = 0x10;
+    m_SendMsg.End2       = 0x03;
+
+    SendMsg();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+void CGarminBinaryDlg::OnBtnBaudDn()
+{
+    ClearMsgBuff(&m_SendMsg);
+
+    m_SendMsg.Start      = 0x10;
+    m_SendMsg.CmdId      = MSG_BAUD_CMD;
+    m_SendMsg.SizeBytes  = 0x04;
+    unsigned int baud    = 9600;
+
+    // Little endien
+    m_SendMsg.Payload[0] = baud;
+    m_SendMsg.Payload[1] = baud >> 8;
+    m_SendMsg.Payload[2] = baud >> 16;
+    m_SendMsg.Payload[3] = baud >> 24;
+
+    m_SendMsg.ChkSum     = CalcChksum(&m_SendMsg);
+    m_SendMsg.End1       = 0x10;
+    m_SendMsg.End2       = 0x03;
+
+    SendMsg();
+}
+
+/////////////////////////////////////////////////////////////////////////////
 // This method confirms a baud rate change in accordance with the procedure
 // documented in Garmin GPS18x Technical Specifications, Appendix C.
 // I assume this may work for most Garmin GPS receivers in serial mode.
 // I have confirmed it works with the eTrex Vista, GPS V and GPS 60CSx.
 /////////////////////////////////////////////////////////////////////////////
-void CGarminBinaryDlg::ConfirmHighBaud()
+void CGarminBinaryDlg::ConfirmNewBaud()
 {
     CString strBaud;
     unsigned int baud = 0;
@@ -863,11 +1188,32 @@ void CGarminBinaryDlg::ConfirmHighBaud()
     // plus or minus 5% of the requested value.  Check that here.
     // e.g. GPS60CSx confirms 38400 at 38461, GPS V confirms at 37889.
     // e.g. eTrex Vista confirms 115200 at 113668
-//  if(baud < 38400  - 1920 || baud > 38400 + 1920)
-//  if(baud < 19200  -  960 || baud > 19200 + 960)
-    if(baud < 115200 - 5760 || baud > 115200 + 5760)
+    // 9600, 19200, 38400, 57600, 115200
+
+    // Look for target baud +/- 5%
+    if(baud > 9600 - 480 && baud < 9600 + 480)
     {
-        AfxMessageBox("High Baud did not work!");
+        baud = 9600;
+    }
+    else if(baud > 19200 - 960 && baud < 19200 + 960)
+    {
+        baud = 19200;
+    }
+    else if(baud > 38400 - 1920 && baud < 38400 + 1920)
+    {
+        baud = 38400;
+    }
+    else if(baud > 57600 - 2880 && baud < 57600 + 2880)
+    {
+        baud = 57600;
+    }
+    else if(baud > 115200 - 5760 && baud < 115200 + 5760)
+    {
+        baud = 115200;
+    }
+    else
+    {
+        AfxMessageBox("Baud change did not work!");
 
         // Ending the process here without sending the confirmations
         // below lets the GPS's 2 second window elapse, and it will
@@ -876,29 +1222,26 @@ void CGarminBinaryDlg::ConfirmHighBaud()
     }
 
     // Display the "standard" baud, not the confirmed number.
-    m_statBaud.SetWindowText("115200");
+    strBaud.Format("%d", baud);
+    m_statBaud.SetWindowText(strBaud);
 
-    // Send ACK of baud change msg.
+    // Send ACK of baud change msg, at old baud.
     OnBtnAck();
 
     // Garmin says to wait at least 100 mSec here.
     Sleep(150);
 
-    // Now change our local baud rate.
-    m_Serial.Setup(CSerial::EBaud115200, CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
-    //m_Serial.Setup(CSerial::EBaud19200, CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
-    //m_Serial.Setup(CSerial::EBaud38400, CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
-    m_Serial.SetupHandshaking(CSerial::EHandshakeOff);
-    m_Serial.SetupReadTimeouts(CSerial::EReadTimeoutNonblocking);
+    // Now change our local baud rate to the new baud.
+    m_Serial.Setup((CSerial::EBaudrate)baud, CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
     m_Serial.Purge();
 
     // Transmit a confirmation at the new baud rate.
     ClearMsgBuff(&m_SendMsg);
 
     m_SendMsg.Start      = 0x10;
-    m_SendMsg.CmdId      = 0x0A;
+    m_SendMsg.CmdId      = MSG_QUERY;
     m_SendMsg.SizeBytes  = 0x02;
-    m_SendMsg.Payload[0] = 0x3A;
+    m_SendMsg.Payload[0] = QUERY_CQCQ;
     m_SendMsg.Payload[1] = 0x00;
     m_SendMsg.ChkSum     = CalcChksum(&m_SendMsg);
     m_SendMsg.End1       = 0x10;
@@ -914,9 +1257,9 @@ void CGarminBinaryDlg::ConfirmHighBaud()
     ClearMsgBuff(&m_SendMsg);
 
     m_SendMsg.Start      = 0x10;
-    m_SendMsg.CmdId      = 0x0A;
+    m_SendMsg.CmdId      = MSG_QUERY;
     m_SendMsg.SizeBytes  = 0x02;
-    m_SendMsg.Payload[0] = 0x3A;
+    m_SendMsg.Payload[0] = QUERY_CQCQ;
     m_SendMsg.Payload[1] = 0x00;
     m_SendMsg.ChkSum     = CalcChksum(&m_SendMsg);
     m_SendMsg.End1       = 0x10;
@@ -924,7 +1267,29 @@ void CGarminBinaryDlg::ConfirmHighBaud()
 
     SendMsg();
 
-	// This whole process must complete in less than 2 seconds
+    // This whole process must complete in less than 2 seconds
     // or the GPS will revert to the old baud rate.
+}
+
+/////////////////////////////////////////////////////////////////////////////
+void CGarminBinaryDlg::OnBtnBaudLocal()
+{
+    // Define the hi/lo baud rates supported
+    const CString strLo = "9600";
+    const CString strHi = "57600";
+
+    CString str;
+    m_statBaud.GetWindowText(str);
+
+    if(str == strLo)
+    {
+        m_statBaud.SetWindowText(strHi);
+        m_Serial.Setup((CSerial::EBaudrate)atoi(strHi), CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
+    }
+    else
+    {
+        m_statBaud.SetWindowText(strLo);
+        m_Serial.Setup((CSerial::EBaudrate)atoi(strLo), CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
+    }
 }
 

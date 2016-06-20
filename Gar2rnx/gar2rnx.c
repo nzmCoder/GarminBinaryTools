@@ -1180,7 +1180,7 @@ FILE *fd;
     char obs[3][3]= {"C1", "L1", "D1"};
 
 
-	// I dont think I'll use more than 40 lines for the header
+    // I dont think I'll use more than 40 lines for the header
     max_lines=40;
     header=(char*)malloc(max_lines*80*sizeof(char));
 
@@ -1213,7 +1213,7 @@ FILE *fd;
     written=sprintf(ptr,padd("COMMENT",buffer,20));
     ptr+=written;
 
-	/*
+    /*
     padd("** from a GPS12 (or XL) (Copyright Antonio Tabernero)",buffer,60);
     written=sprintf(ptr,"%s",buffer);
     ptr+=written;
@@ -1226,8 +1226,8 @@ FILE *fd;
     ptr+=written;
     written=sprintf(ptr,"%s",padd("COMMENT",buffer,20));
     ptr+=written;
-	*/
-	
+    */
+
     written=sprintf(ptr,"** Options: ");
     ptr+=written;
     written=sprintf(ptr,padd(COMMAND_LINE,buffer,60-written));
@@ -1240,7 +1240,7 @@ FILE *fd;
     ptr+=written;
     written=sprintf(ptr,padd("MARKER NAME",buffer,20));
     ptr+=written;
-    written=sprintf(ptr,padd("Number of Antenna marker",buffer,60));
+    written=sprintf(ptr,padd("Mark 1",buffer,60));
     ptr+=written;
     written=sprintf(ptr,padd("MARKER NUMBER",buffer,20));
     ptr+=written;
@@ -1265,7 +1265,7 @@ FILE *fd;
 
     written=sprintf(ptr,"%d%19c",0,32);
     ptr+=written;
-    written=sprintf(ptr,padd("NONE NONE",buffer,40));
+    written=sprintf(ptr,padd("NONE",buffer,40));
     ptr+=written;
     written=sprintf(ptr,padd("ANT # / TYPE",buffer,20));
     ptr+=written;
@@ -1382,7 +1382,7 @@ void print_rinex_info(ULONG wdays, double tow,rinex_obs epoch[],FILE *fd)
         //fprintf(fd,"%11.7f",(double)gmt.tm_sec+frac,32,32);
 
         fprintf(fd,"%3d%3d",0,N_used);
-        for(k=0; k<32; k++) if(epoch[k].used>=DUMP) fprintf(fd,"G%2d",k+1);
+        for(k=0; k<32; k++) if(epoch[k].used>=DUMP) fprintf(fd,"G%02d",k+1);
         for(k=0; k<12-N_used; k++) fprintf(fd,"%3c",32);
 
         //if(RESET_CLOCK) fprintf(fd,"%12.9f",dt);
@@ -3914,13 +3914,13 @@ void print_help(char **argv)
     char help[8192];
 
     sprintf(help,
-		"-----------------------------------------------------------------\n"\
-		"Gar2rnx (Garmin to Rinex) generates rinex2 compliant files fromv \n"\
-		"data obtained with some Garmin handhelds using the async logger  \n"\
-		"-----------------------------------------------------------------\n"\
-		"Version 1.48, Copyright 2000-2002 Antonio Tabernero Galan        \n"\
-		"Version %4.2f, Copyright 2016 Norm Moulton                        \n"\
-		"-----------------------------------------------------------------\n",VERSION);
+            "-----------------------------------------------------------------\n"\
+            "Gar2rnx (Garmin to Rinex) generates rinex2 compliant files fromv \n"\
+            "data obtained with some Garmin handhelds using the async logger  \n"\
+            "-----------------------------------------------------------------\n"\
+            "Version 1.48, Copyright 2000-2002 Antonio Tabernero Galan        \n"\
+            "Version %4.2f, Copyright 2016 Norm Moulton                        \n"\
+            "-----------------------------------------------------------------\n",VERSION);
 
 
     strcat(help,"\n\

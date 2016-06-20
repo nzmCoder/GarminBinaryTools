@@ -54,7 +54,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define VERSION 1.24
 
 //Uncomment this only for serial IO debugging  purposes
-//#define TRACE_IO
+#define TRACE_IO
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -123,7 +123,7 @@ static const char MONTH[12][4] = {"Jan", "Feb", "Mar", "Apr", "May",
 #define DLE_ST 1
 #define ETX_ST 2
 
-#define MAX_FAILED 50
+#define MAX_FAILED 5000
 
 /////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -953,7 +953,7 @@ void log_packets_0x33(FILE *f_bin)
 {
     clock_t start=clock();
     double dt = 0;
-    const double MAX_WAIT = 15;  // Wait seconds for a 3D fix in msg 0x33
+    const double MAX_WAIT = 20;  // Wait seconds for a 3D fix in msg 0x33
     UINT n, fix;
     ULONG rec = 0;
     ULONG ok = 0;

@@ -151,11 +151,31 @@ SOURCE=.\StdAfx.h
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # Begin Source File
 
+SOURCE=.\res\BaudSync.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\BaudSync.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\bitmap1.bmp
+# End Source File
+# Begin Source File
+
 SOURCE=.\res\GarminBinary.ico
 # End Source File
 # Begin Source File
 
 SOURCE=.\res\GarminBinary.rc2
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\icon1.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\icon_baud.ico
 # End Source File
 # End Group
 # End Target

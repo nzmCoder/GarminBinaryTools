@@ -55,17 +55,44 @@ typedef struct
 
 typedef enum
 {
-    MSG_ACK     = 0x06,
-    MSG_ASYNC   = 0x1C,
-    MSG_PSEUD   = 0x38,
-    MSG_REQUEST = 0x0A,
+    MSG_ACK        = 0x06,
 
-    MSG_ID_CMD  = 0xFE,  // Cmd Request ID
-    MSG_ID_RSP  = 0xFF,  // Rsp ID
-    MSG_ID_EXT  = 0xFD,  // Rsp ID Extended
+    MSG_QUERY      = 0x0A,
+
+    MSG_ASYNC_CMD  = 0x1C,
+    MSG_PSEUD_RSP  = 0x38,
+
+    MSG_BAUD_CMD   = 0x30,
+    MSG_BAUD_RSP   = 0x31,
+
+    MSG_PVT_RSP    = 0x33,
+
+    MSG_LATLON_RSP = 0x11,
+    MSG_UTC_RSP    = 0x0E,
+
+    MSG_ID_CMD     = 0xFE,  // Cmd Request ID
+    MSG_ID_RSP     = 0xFF,  // Rsp ID
+    MSG_ID_EXT     = 0xFD,  // Rsp ID Extended
 
 } e_MSG_TYPE;
 
+typedef enum
+{
+    QUERY_LATLON   = 0x02,
+    QUERY_UTC      = 0x05,
+    QUERY_POS_ON   = 0x31,
+    QUERY_POS_OFF  = 0x32,
+    QUERY_CQCQ     = 0x3A,
+
+} e_QUERY_TYPE;
+
+static const char MONTH[13][4] =
+{
+    "---", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
+
+static const double PI = 3.1415926535897932;
 
 /////////////////////////////////////////////////////////////////////////////
 // CGarminBinaryApp:
