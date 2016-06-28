@@ -79,9 +79,10 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About GarminBinary"
 FONT 8, "MS Sans Serif"
 BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,142,10,21,20
+    ICON            IDR_MAINFRAME,IDC_STATIC,271,10,20,20
     DEFPUSHBUTTON   "OK",IDOK,127,161,50,14,WS_GROUP
     LTEXT           "",IDC_STAT_TEXT,7,34,290,122,SS_SUNKEN
+    LTEXT           "Static",IDC_STAT_BUILD_DATE,7,15,219,8
 END
 
 IDD_MAIN_DLG DIALOGEX 0, 0, 644, 231
@@ -94,30 +95,32 @@ BEGIN
     LTEXT           "Comm Port:",IDC_STATIC,7,7,50,14,SS_CENTERIMAGE
     COMBOBOX        IDC_CMBO_PORT,61,7,45,145,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
-    EDITTEXT        IDC_EDIT_MSGS,7,104,630,120,ES_MULTILINE | ES_WANTRETURN | 
+    EDITTEXT        IDC_EDIT_MSGS,7,93,630,131,ES_MULTILINE | ES_WANTRETURN | 
                     WS_VSCROLL | WS_HSCROLL
-    CTEXT           "---  Binary Protocol Message Stream  ---",IDC_STATIC,7,
-                    94,630,8,SS_CENTERIMAGE
+    CTEXT           "---  Output Console  ---",IDC_STATIC,227,82,189,8,
+                    SS_CENTERIMAGE
     PUSHBUTTON      "Start Async",IDC_BTN_START_ASYNC,228,7,50,14
     PUSHBUTTON      "Stop Async",IDC_BTN_STOP_ASYNC,228,25,50,14
-    PUSHBUTTON      "ACK",IDC_BTN_ACK,443,7,50,14
-    PUSHBUTTON      "Clear Buffer",IDC_BTN_CLEAR,390,7,50,14
-    LTEXT           "",IDC_STAT_GPS_ID_RSP,61,25,162,14,SS_CENTERIMAGE | 
+    PUSHBUTTON      "ACK",IDC_BTN_ACK,587,43,50,14,NOT WS_VISIBLE
+    PUSHBUTTON      "Clear Buffer",IDC_BTN_CLEAR,479,62,50,14
+    LTEXT           "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ",
+                    IDC_STAT_GPS_ID_RSP,61,25,162,14,SS_CENTERIMAGE | 
                     SS_SUNKEN
     PUSHBUTTON      "PVT On",IDC_BTN_POS_ON,282,7,50,14
     PUSHBUTTON      "PVT Off",IDC_BTN_POS_OFF,282,25,50,14
-    LTEXT           "",IDC_STAT_MSG_ID_SEEN,61,62,236,14,SS_CENTERIMAGE | 
+    LTEXT           "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ",
+                    IDC_STAT_MSG_ID_SEEN,61,62,236,14,SS_CENTERIMAGE | 
                     SS_SUNKEN
     LTEXT           "Msgs Seen:",IDC_STATIC,7,62,50,14,SS_CENTERIMAGE
-    LTEXT           "9600",IDC_STAT_BAUD,164,7,27,14,SS_CENTERIMAGE | 
+    LTEXT           "9600",IDC_STAT_BAUD,181,7,27,14,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "Baud:",IDC_STATIC,125,7,20,14,SS_CENTERIMAGE
-    PUSHBUTTON      "About",IDC_BTN_ABOUT,497,7,50,14
+    LTEXT           "Baud:",IDC_STATIC,142,7,20,14,SS_CENTERIMAGE
+    PUSHBUTTON      "About",IDC_BTN_ABOUT,587,7,50,14
     LTEXT           "Frame Errors:",IDC_STATIC,303,62,50,14,SS_CENTERIMAGE
     LTEXT           "0",IDC_STAT_ERR_FRMS,357,62,27,14,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    PUSHBUTTON      "Log On",IDC_BTN_LOG_ON,336,7,50,14
-    PUSHBUTTON      "Log Off",IDC_BTN_LOG_OFF,336,25,50,14
+    PUSHBUTTON      "Start Rec File",IDC_BTN_LOG_ON,336,7,50,14
+    PUSHBUTTON      "Stop Rec File",IDC_BTN_LOG_OFF,336,25,50,14
     PUSHBUTTON      "Get Lat/Lon",IDC_BTN_GET_LATLON,7,43,50,14
     PUSHBUTTON      "Get UTC",IDC_BTN_GET_UTC,173,43,50,14
     LTEXT           "- - - - - - - - - - - - - - - - - -",IDC_STAT_UTC,228,
@@ -125,18 +128,33 @@ BEGIN
     LTEXT           "- - - - - - - - - - - - - - - - - - - - - - ",
                     IDC_STAT_LATLON,61,43,104,14,SS_CENTERIMAGE | SS_SUNKEN
     LTEXT           "Fix Quality:",IDC_STATIC,327,43,37,14,SS_CENTERIMAGE
-    LTEXT           "",IDC_STAT_GPSFIX,368,43,18,14,SS_CENTERIMAGE | 
+    LTEXT           "0",IDC_STAT_GPSFIX,368,43,18,14,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "0x0000",IDC_STAT_MASK,443,43,34,14,SS_CENTERIMAGE | 
-                    SS_SUNKEN
-    LTEXT           "Async Mask:",IDC_STATIC,395,43,45,14,SS_CENTERIMAGE
-    PUSHBUTTON      ">>",IDC_BTN_BAUD_UP,194,7,12,14
-    PUSHBUTTON      "<<",IDC_BTN_BAUD_DN,149,7,12,14
-    PUSHBUTTON      "",IDC_BTN_BAUD_LOCAL,209,7,14,14,BS_ICON,
+    LTEXT           "0x0000",IDC_STAT_MASK,603,67,34,14,SS_CENTERIMAGE | 
+                    SS_SUNKEN | NOT WS_VISIBLE
+    LTEXT           "Async Mask:",IDC_STATIC,555,67,45,14,SS_CENTERIMAGE | 
+                    NOT WS_VISIBLE
+    PUSHBUTTON      ">>",IDC_BTN_BAUD_UP,211,7,12,14
+    PUSHBUTTON      "<<",IDC_BTN_BAUD_DN,166,7,12,14
+    PUSHBUTTON      "",IDC_BTN_BAUD_LOCAL,119,7,17,14,BS_ICON,
                     WS_EX_TRANSPARENT
-    LTEXT           "0",IDC_STAT_WTRLINE,443,25,34,14,SS_CENTERIMAGE | 
+    LTEXT           "0",IDC_STAT_WTRLINE,440,62,34,14,SS_CENTERIMAGE | 
                     SS_SUNKEN
-    LTEXT           "Water Line:",IDC_STATIC,394,25,45,14,SS_CENTERIMAGE
+    LTEXT           "Water Line:",IDC_STATIC,393,62,38,14,SS_CENTERIMAGE
+    PUSHBUTTON      "Power Off",IDC_BTN_PWR_OFF,479,25,50,14
+    CONTROL         "Power Off when done",IDC_CHK_PWR_OFF,"Button",
+                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,479,5,55,18
+    LTEXT           "- - - - - - -",IDC_STAT_EPE,440,43,34,14,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    LTEXT           "Est. Error:",IDC_STATIC,393,43,38,14,SS_CENTERIMAGE
+    PUSHBUTTON      "Gar2Rnx",IDC_BTN_GAR2RNX,587,25,50,14,NOT WS_VISIBLE
+    LTEXT           "0",IDC_STAT_TICK,414,25,21,14,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    LTEXT           "Tick:",IDC_STATIC,393,25,18,14,SS_CENTERIMAGE
+    EDITTEXT        IDC_EDIT_REC_TIME,414,7,21,14,ES_AUTOHSCROLL
+    LTEXT           "Rec:",IDC_STATIC,393,7,16,14,SS_CENTERIMAGE
+    LTEXT           "minutes",IDC_STATIC,440,7,26,14,SS_CENTERIMAGE
+    LTEXT           "seconds",IDC_STATIC,440,25,31,14,SS_CENTERIMAGE
 END
 
 

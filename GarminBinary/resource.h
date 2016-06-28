@@ -25,6 +25,7 @@
 #define IDC_STAT_TEXT                   1012
 #define IDC_STAT_MSG_ID_SEEN            1013
 #define IDC_BTN_BAUD                    1014
+#define IDC_BTN_GAR2RNX                 1014
 #define IDC_BTN_ABOUT                   1015
 #define IDC_BTN_LOG_ON                  1016
 #define IDC_STAT_ERR_FRMS               1017
@@ -40,6 +41,12 @@
 #define IDC_STAT_MASK                   1026
 #define IDC_BTN_BAUD_LOCAL              1027
 #define IDC_STAT_WTRLINE                1028
+#define IDC_BTN_PWR_OFF                 1029
+#define IDC_CHK_PWR_OFF                 1030
+#define IDC_STAT_EPE                    1031
+#define IDC_STAT_BUILD_DATE             1031
+#define IDC_STAT_TICK                   1032
+#define IDC_EDIT_REC_TIME               1033
 
 // Next default values for new objects
 //
@@ -47,7 +54,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        133
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1025
+#define _APS_NEXT_CONTROL_VALUE         1034
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

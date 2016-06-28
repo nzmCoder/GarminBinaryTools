@@ -70,11 +70,20 @@ public:
     void UpdateAsyncMask();
     CString Latitude2Str(double lat);
     CString Longitude2Str(double lon);
+    void G12State(e_STATE_TYPE state = STATE_NEXT);
+    CString ChangeExtension(CString strPath, CString strNewExt);
+    CString GetGarminBinaryFilename();
+    void TickDown();
+
 
 
 // Dialog Data
     //{{AFX_DATA(CGarminBinaryDlg)
     enum { IDD = IDD_MAIN_DLG };
+    CEdit   m_editRecTime;
+    CStatic m_statTick;
+    CStatic m_statEPE;
+    CButton m_chkPwrOff;
     CStatic m_statWaterLn;
     CButton m_btnBaudLocal;
     CStatic m_statMask;
@@ -124,6 +133,8 @@ protected:
     afx_msg void OnBtnBaudUp();
     afx_msg void OnBtnBaudDn();
     afx_msg void OnBtnBaudLocal();
+    afx_msg void OnBtnPwrOff();
+    afx_msg void OnBtnGar2rnx();
     //}}AFX_MSG
     DECLARE_MESSAGE_MAP()
 
@@ -131,6 +142,7 @@ private:
 
     // Data
     CString m_strSerialPort;
+    CString m_strFileNameG12;
 
     t_MSG_FORMAT m_SendMsg;
     t_MSG_FORMAT m_RecvMsg;
@@ -141,6 +153,8 @@ private:
 
     t_UINT16 mMask;
     bool m_bIsLogging;
+    e_STATE_TYPE mG12State;
+    int mTickDown;
 
     unsigned int mHighWater;
     CFile m_OutFile;

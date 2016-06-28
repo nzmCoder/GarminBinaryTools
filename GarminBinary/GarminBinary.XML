@@ -2,7 +2,7 @@
 <!-- This file contains persistent data for the application -->
 <data>
 <element section="MainConfig" entry="ComPort" value="COM1"></element>
-<element section="" entry="" value=""></element>
+<element section="MainConfig" entry="Gar2RnxPath" value="C:\Projects\GarminTools\Gar2rnx\Release\"></element>
 <element section="" entry="" value=""></element>
 <element section="" entry="" value=""></element>
 <element section="" entry="" value=""></element>
