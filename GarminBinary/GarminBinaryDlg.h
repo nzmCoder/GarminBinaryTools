@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 #endif // _MSC_VER > 1000
 
+#include "GarminBinary.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CGarminBinaryDlg dialog
@@ -43,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 class CGarminBinaryDlg : public CDialog
 {
 public:
+    void UpdateBandwidth();
 
     // Construction
     CGarminBinaryDlg(CWnd* pParent = NULL); // standard constructor
@@ -67,26 +69,25 @@ public:
     void DecodePVT();
     void AddToLogFile();
     void UpdateHighWater();
-    void UpdateAsyncMask();
     CString Latitude2Str(double lat);
     CString Longitude2Str(double lon);
     void G12State(e_STATE_TYPE state = STATE_NEXT);
     CString ChangeExtension(CString strPath, CString strNewExt);
     CString GetGarminBinaryFilename();
     void TickDown();
-
+    void AsyncMaskOn();
 
 
 // Dialog Data
     //{{AFX_DATA(CGarminBinaryDlg)
     enum { IDD = IDD_MAIN_DLG };
+    CStatic m_statBandwidth;
     CEdit   m_editRecTime;
     CStatic m_statTick;
     CStatic m_statEPE;
     CButton m_chkPwrOff;
     CStatic m_statWaterLn;
     CButton m_btnBaudLocal;
-    CStatic m_statMask;
     CStatic m_statGpsFix;
     CStatic m_statLatLon;
     CStatic m_statUTC;
@@ -119,15 +120,15 @@ protected:
     virtual void OnOK();
     afx_msg void OnCloseupCmboPort();
     afx_msg void OnTimer(UINT nIDEvent);
-    afx_msg void OnBtnStartAsync();
-    afx_msg void OnBtnStopAsync();
+    afx_msg void OnBtnAsyncOn();
+    afx_msg void OnBtnAsyncOff();
     afx_msg void OnBtnAck();
     afx_msg void OnBtnClear();
-    afx_msg void OnBtnPosOn();
-    afx_msg void OnBtnPosOff();
+    afx_msg void OnBtnPvtOn();
+    afx_msg void OnBtnPvtOff();
     afx_msg void OnBtnAbout();
-    afx_msg void OnBtnLogOn();
-    afx_msg void OnBtnLogOff();
+    afx_msg void OnBtnRecOn();
+    afx_msg void OnBtnRecOff();
     afx_msg void OnBtnGetLatLon();
     afx_msg void OnBtnGetUTC();
     afx_msg void OnBtnBaudUp();
@@ -151,7 +152,6 @@ private:
     unsigned int mMsgsSeen[0x100];
     unsigned int mErrFrames;
 
-    t_UINT16 mMask;
     bool m_bIsLogging;
     e_STATE_TYPE mG12State;
     int mTickDown;

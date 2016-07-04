@@ -23,10 +23,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /****************************************************************************
 
+1.50 * Bring header up to 2.11 format
+     * Fix all compile warnings
+
 1.49 * Changes 2016 by N. Moulton
      * Reformated source code
-     * Fixed all compile warnings
-     * Fix option parsing
 
 1.48 * Version published. Minor cosmetic changes from 1.45
 
@@ -52,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <time.h>
 #include <sys/types.h>
 
-#define VERSION 1.49
+#define VERSION 1.50
 
 
 #define AS_BYTE   0
@@ -273,7 +274,10 @@ int n;
 int n2=0;
 
 
+// function declarations
 void llh2xyz(double*,double*);
+int get_messages(char h[32][32]);
+int show_alm();
 
 
 type_rec0x11 process_0x11(BYTE *record) // Position
@@ -327,7 +331,7 @@ double gps_time(double julday, int *week)
     julday+= (13.0/86400.0);
 
     days_gps=(julday-2444244.5);
-    wn = floor(days_gps/7);
+    wn = (int)floor(days_gps/7);
 
     tow = (days_gps- wn*7)*86400;
 
@@ -476,7 +480,7 @@ void process_0x37(BYTE *record)
     memcpy(&c2,record+4,2);
     memcpy(&cc,record+6,2);
     memcpy(&countdown,record+8,2);
-    TR=((float)1024.0-countdown)/16.0;
+    TR=(float)((1024.0-countdown)/16.0);
     memcpy(&pr,record+10,8);
     memcpy(&c511,record+18,4);
     memcpy(&tow,record+22,8);
@@ -545,7 +549,7 @@ void process_0x1a(BYTE *record)
             svid=rec[5];
             elev=rec[4];
             sq=*((UINT*)(rec+2));
-            frac_phase=*((UINT*)(rec+0))/2048.0;
+            frac_phase=(float)(*((UINT*)(rec+0))/2048.0);
             trk=rec[6];
             flag=rec[7];
         }
@@ -554,7 +558,7 @@ void process_0x1a(BYTE *record)
             svid=rec[0];
             elev=rec[1];
             sq=*((UINT*)(rec+4));
-            frac_phase=*((UINT*)(rec+2))/2048.0;
+            frac_phase=(float)(*((UINT*)(rec+2))/2048.0);
             trk=rec[6];
             flag=rec[7];
         }
@@ -740,7 +744,7 @@ type_rec0x38 process_0x38(BYTE* record)
     if(ONE_SAT && DIF_RECORDS)    // Differencing records is only valid when tracking one sat
     {
         dt=rec38.tow-last38.tow;
-        nsec=floor(dt+0.499999999);                  // GPS time exact increment
+        nsec=(int)floor(dt+0.499999999);                  // GPS time exact increment
         drift = (dt-nsec)/nsec;                      // Clock drift from the 1'' increment
         d_pr=(rec38.pr-last38.pr);                   // Pseudorange increment
         d_cphase=rec38.c_phase-last38.c_phase;       // Phase counter increment
@@ -751,8 +755,8 @@ type_rec0x38 process_0x38(BYTE* record)
         if(fabs(slip)<5000)
         {
             mean_q+=rec38.db;
-            mean+=(slip/nsec);
-            sigma+=(slip*slip/(nsec*nsec));
+            mean+=(float)(slip/nsec);
+            sigma+=(float)(slip*slip/(nsec*nsec));
             n++;
         }
         dtracked=rec38.tracked-last38.tracked;
@@ -1151,9 +1155,9 @@ char *padd(char *in, char *out, int maxL)
     int k;
 
     L=strlen(in);
-    cop = (L>maxL)? maxL:L;
+    cop = ((int)L>maxL)? maxL:L;
 
-    for(k=0; k<cop; k++) out[k]=in[k];
+    for(k=0; k<(int)cop; k++) out[k]=in[k];
     for(k=cop; k<maxL; k++) out[k]=' ';
     out[maxL]=0;
 
@@ -1186,9 +1190,9 @@ FILE *fd;
 
     ptr=header;
 
-    written=sprintf(ptr,"%6d%14c",2,32);
+    written=sprintf(ptr,"%9.2f%11c",2.11,32);
     ptr+=written;
-    written=sprintf(ptr,padd("OBSERVATION FILE",buffer,20));
+    written=sprintf(ptr,padd("OBSERVATION DATA",buffer,20));
     ptr+=written;
     written=sprintf(ptr,padd("G (GPS)",buffer,20));
     ptr+=written;
@@ -1240,13 +1244,13 @@ FILE *fd;
     ptr+=written;
     written=sprintf(ptr,padd("MARKER NAME",buffer,20));
     ptr+=written;
-    written=sprintf(ptr,padd("Mark 1",buffer,60));
+    written=sprintf(ptr,padd("A001",buffer,60));
     ptr+=written;
     written=sprintf(ptr,padd("MARKER NUMBER",buffer,20));
     ptr+=written;
-    written=sprintf(ptr,padd("-Unknown-",buffer,20));
+    written=sprintf(ptr,padd("Unknown",buffer,20));
     ptr+=written;
-    written=sprintf(ptr,padd("-Unknown-",buffer,40));
+    written=sprintf(ptr,padd("Unknown",buffer,40));
     ptr+=written;
     written=sprintf(ptr,"OBSERVER / AGENCY   ");
     ptr+=written;
@@ -1263,15 +1267,17 @@ FILE *fd;
     ptr+=written;
 
 
-    written=sprintf(ptr,"%d%19c",0,32);
+    written=sprintf(ptr,padd("NONE",buffer,20)); // ANT # (Alphanumeric)
     ptr+=written;
-    written=sprintf(ptr,padd("NONE",buffer,40));
+    written=sprintf(ptr,padd("NONE",buffer,20)); // ANT TYPE
+    ptr+=written;
+    written=sprintf(ptr,padd(" ",buffer,20)); // blank field
     ptr+=written;
     written=sprintf(ptr,padd("ANT # / TYPE",buffer,20));
     ptr+=written;
 
     if(GIVEN_XYZ) padd("** Position provided by user in command line",buffer,60);
-    else padd("** Position from first 3D fix of the receiver",buffer,60);
+    else padd("** Position computed internally by GPS receiver",buffer,60);
     written=sprintf(ptr,buffer);
     ptr+=written;
     written=sprintf(ptr,"COMMENT             ");
@@ -1331,7 +1337,7 @@ FILE *fd;
     written=sprintf(ptr,"TIME OF FIRST OBS   ");
     ptr+=written;
 
-    written=sprintf(ptr,"%6d%54cINTERVAL%12c",INTERVAL,32,32);
+    written=sprintf(ptr,"%10.3f%50cINTERVAL%12c",(float)INTERVAL,32,32);
     ptr+=written;
     written=sprintf(ptr,"%60cEND OF HEADER       ",32);
     ptr+=written;
@@ -1614,9 +1620,9 @@ type_rec0x38 choose(type_rec0x38 rec[],int nn, rinex_obs last)
         for(k=0; k<nn; k++)
         {
             dt=rec[k].tracked-last.tracked;
-            dif[0]=(float)dt/256.0;
+            dif[0]=(float)(dt/256.0);
             dif[1]=(float)rec[k].delta_f-last.doppler;
-            DIF=fabs(dif[0])+fabs(dif[1]);
+            DIF=(float)(fabs(dif[0])+fabs(dif[1]));
             if(DIF<dif_min)
             {
                 dif_min=DIF;
@@ -1664,7 +1670,7 @@ int verify_c511(type_rec0x38 allrec[],int N,double last_tow,ULONG next_c511)
     if(nmax==0) return 0;
 
     dif=(float)next_c511-(float)c511_ok;
-    if(last_tow!=-1) if(abs(dif)>20) return 0;
+    if(last_tow!=-1) if(abs((int)dif)>20) return 0;
 
     nsat=0;
     for(k=0; k<N; k++) if(allrec[k].c511==c511_ok) allrec[nsat++]=allrec[k];
@@ -1743,7 +1749,7 @@ void add_0x16_to_epoch(rinex_obs epoch[], type_rec0x16 rec)
 
 //printf("%d %14.3f %14.3f %f\n",sv,epoch[sv].prange,rec.pr,epoch[sv].prange-rec.pr);
 
-    if(epoch[sv].prange==rec.pr) epoch[sv].doppler=rec.delta_pr/lambda;
+    if(epoch[sv].prange==rec.pr) epoch[sv].doppler=(float)(rec.delta_pr/lambda);
 
 }
 
@@ -1927,7 +1933,7 @@ void generate_rinex(FILE *org)
             rec36=process_0x36(record);
             sv=rec36.sv;
             if(sv>=32) break;
-            epoch[sv].last36=(float)rec36.c50/50.0;
+            epoch[sv].last36=(float)(rec36.c50/50.0);
             break;
 
         case 0x38:
@@ -2732,7 +2738,7 @@ void fill_subframe2()
     eph[current_sat].fit_flag=(BYTE)temp;
     L=5;
     temp = extrae_ulong(235,L);
-    eph[current_sat].aodo=temp*900;
+    eph[current_sat].aodo=(unsigned short)(temp*900);
 
 
     if(VERBOSE_NAV==0) return;
@@ -2862,7 +2868,8 @@ void fill_subframe3()
 void fill_subframe4()
 {
     ULONG temp;
-    BYTE page,sv_id,av,as;
+    BYTE page,sv_id,av;
+    //BYTE as;
     double d;
     int L,k,bad;
     BYTE sv_conf[32];
@@ -2903,7 +2910,7 @@ void fill_subframe4()
         break;//Reserved
         break;
     case 13:
-        av=extrae_ulong(57,2);
+        av=(BYTE)extrae_ulong(57,2);
         switch(av)
         {
         case 0:
@@ -3084,7 +3091,7 @@ void fill_subframe4()
 
 int get_messages(char h[32][32])
 {
-    int k;
+//    int k;
 
     strcpy(h[0],"All signals OK");
 
@@ -3136,7 +3143,8 @@ int get_messages(char h[32][32])
 int show_alm()
 {
     double ecc,inc,Wdot,W0,roota,w,M0,af0,af1;
-    ULONG wna,toa;
+//    ULONG wna
+    ULONG toa;
     BYTE health;
     int L;
     ULONG temp;
@@ -3210,8 +3218,8 @@ void fill_subframe5()
 {
     BYTE page,sv_id;
     char msg[32][32];
-    ULONG temp;
-    double d;
+//    ULONG temp;
+//    double d;
     ULONG wna,toa;
     BYTE sv_health[24],detail;
     int k,bad;
@@ -3328,8 +3336,8 @@ BOOLEAN info_frame(ULONG N_frame,char* info_msg)
     BOOLEAN fail=0;
     BYTE sf_id,preamble;
     ULONG tow;
-    ULONG av;
-    char av_message[16];
+//    ULONG av;
+//    char av_message[16];
 
 
     n_bad=verify_frame();
@@ -3882,7 +3890,7 @@ void monitor_nav(FILE *fd)
                 //pausa(600);
                 word=((rec.c50-30)%300)/30;
 
-                for(k=1; k<(word-last_word); k++) printf(" ");
+                for(k=1; k<(int)(word-last_word); k++) printf(" ");
                 //for(k=1;k<(word-last_word);k++) ptr+=sprintf(ptr," ");
 
                 par=parity(rec.uk);
@@ -4139,7 +4147,7 @@ FILE* parse_arg(int argc, char **argv)
 
 
     strcpy(location,"site");
-    strcpy(marker,"Garmin");
+    strcpy(marker,"Measured Point");
 
 // User provided arguments
     arg_num=2;

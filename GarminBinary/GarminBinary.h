@@ -74,8 +74,8 @@ typedef enum
     QUERY_LATLON    = 0x02,
     QUERY_UTC       = 0x05,
     QUERY_PWR_OFF   = 0x08,
-    QUERY_POS_ON    = 0x31,
-    QUERY_POS_OFF   = 0x32,
+    QUERY_PVT_ON    = 0x31,
+    QUERY_PVT_OFF   = 0x32,
     QUERY_CQCQ      = 0x3A,
 } e_QUERY_TYPE;
 

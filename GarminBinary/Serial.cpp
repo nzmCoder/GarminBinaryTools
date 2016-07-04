@@ -1,20 +1,20 @@
 //  Serial.cpp - Implementation of the CSerial class
 //
 //  Copyright (C) 1999-2003 Ramon de Klein (Ramon.de.Klein@ict.nl)
+//  Copyright (C) 2016 Norm Moulton
 //
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This library is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 //////////////////////////////////////////////////////////////////////
@@ -114,12 +114,12 @@ CSerial::CSerial()
     , m_hFile(0)
     , m_eEvent(EEventNone)
     , m_dwEventMask(0)
+    , m_nByteCount(0)
+    , m_fBandwidthAvg(0.0)
 #ifndef SERIAL_NO_OVERLAPPED
     , m_hevtOverlapped(0)
 #endif
 {
-    m_BytesRcvd = 0;
-    m_BytesSent = 0;
 }
 
 CSerial::~CSerial()
@@ -1085,8 +1085,8 @@ LONG CSerial::Write(const void* pData, size_t iLen, DWORD* pdwWritten,
 
 #endif
 
-    // count the total bytes written
-    m_BytesSent += *pdwWritten;
+    // Count the total bytes written
+    m_nByteCount += *pdwWritten;
 
     // Return successfully
     return m_lLastError;
@@ -1244,8 +1244,8 @@ LONG CSerial::Read(void* pData, size_t iLen, DWORD* pdwRead,
 
 #endif
 
-    // count the total bytes read
-    m_BytesSent += *pdwRead;
+    // Count the total bytes read
+    m_nByteCount += *pdwRead;
 
     // Return successfully
     return m_lLastError;
@@ -1435,4 +1435,59 @@ bool CSerial::GetRLSD(void)
 
     // Determine if RLSD is on
     return (dwModemStat & MS_RLSD_ON) != 0;
+}
+
+void CSerial::SetDTR(void)
+{
+    // Reset error state
+    m_lLastError = ERROR_SUCCESS;
+
+    // Attempt to assert the DTR signal
+    if(!::EscapeCommFunction(m_hFile, 3))  //SETDTR))
+    {
+        // Obtain the error code
+        m_lLastError = ::GetLastError();
+
+        // Display a warning
+        _RPTF0(_CRT_WARN,"CSerial::SetDTR - Error");
+    }
+
+    return;
+}
+
+void CSerial::ClrDTR(void)
+{
+    // Reset error state
+    m_lLastError = ERROR_SUCCESS;
+
+    // Attempt to assert the DTR signal
+    if(!::EscapeCommFunction(m_hFile, 4)) // CLRDTR))
+    {
+        // Obtain the error code
+        m_lLastError = ::GetLastError();
+
+        // Display a warning
+        _RPTF0(_CRT_WARN,"CSerial::SetDTR - Error");
+    }
+
+    return;
+}
+
+float CSerial::CalcBandwidth(float fPeriodSecs)
+{
+    // Calculate the instantaneous bandwidth (bps) over this period.
+    float fBandwidth = ((m_nByteCount * (float)10.0)   // 10 bits per byte w/ 8-N-1.
+                        / fPeriodSecs);
+
+    // Average bandwidth is a smoothed average of last n readings.
+    // The magic numbers are selected as n and n+1, the smoothing period.
+    m_fBandwidthAvg = ((m_fBandwidthAvg * (float)5.0) + fBandwidth) / (float)6.0;
+
+    // Detect that bandwidth has dropped to zero, make the average respond immediately.
+    if(fBandwidth == 0) m_fBandwidthAvg = 0;
+
+    // Now reset the count
+    m_nByteCount = 0;
+
+    return m_fBandwidthAvg;
 }

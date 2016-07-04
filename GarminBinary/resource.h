@@ -12,14 +12,18 @@
 #define IDC_BTN_GET_ID                  1000
 #define IDC_CMBO_PORT                   1001
 #define IDC_BTN_START_ASYNC             1002
+#define IDC_BTN_ASYNC_ON                1002
 #define IDC_BTN_SEND                    1003
 #define IDC_BTN_STOP_ASYNC              1004
+#define IDC_BTN_ASYNC_OFF               1004
 #define IDC_EDIT_MSGS                   1005
 #define IDC_BTN_ACK                     1007
 #define IDC_BTN_CLEAR                   1008
 #define IDC_STAT_GPS_ID_RSP             1009
 #define IDC_BTN_POS_ON                  1010
+#define IDC_BTN_PVT_ON                  1010
 #define IDC_BTN_POS_OFF                 1011
+#define IDC_BTN_PVT_OFF                 1011
 #define IDC_BTN_POS_RMD                 1012
 #define IDC_STAT_BAUD                   1012
 #define IDC_STAT_TEXT                   1012
@@ -28,8 +32,10 @@
 #define IDC_BTN_GAR2RNX                 1014
 #define IDC_BTN_ABOUT                   1015
 #define IDC_BTN_LOG_ON                  1016
+#define IDC_BTN_REC_ON                  1016
 #define IDC_STAT_ERR_FRMS               1017
 #define IDC_BTN_LOG_OFF                 1018
+#define IDC_BTN_REC_OFF                 1018
 #define IDC_BTN_GET_LATLON              1019
 #define IDC_BTN_GET_UTC                 1020
 #define IDC_STAT_UTC                    1021
@@ -47,6 +53,7 @@
 #define IDC_STAT_BUILD_DATE             1031
 #define IDC_STAT_TICK                   1032
 #define IDC_EDIT_REC_TIME               1033
+#define IDC_STAT_BW                     1034
 
 // Next default values for new objects
 //

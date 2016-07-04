@@ -47,6 +47,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static char THIS_FILE[] = __FILE__;
 #endif
 
+// This turns on only async messages 36, 37, 38
+#define _ASYNC_MASK 0x20;
+
 // Millisecond timer period for fetching serial bytes
 #define _RECV_SERIAL_TIMER_MSECS 1
 
@@ -170,13 +173,13 @@ void CGarminBinaryDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialog::DoDataExchange(pDX);
     //{{AFX_DATA_MAP(CGarminBinaryDlg)
+    DDX_Control(pDX, IDC_STAT_BW, m_statBandwidth);
     DDX_Control(pDX, IDC_EDIT_REC_TIME, m_editRecTime);
     DDX_Control(pDX, IDC_STAT_TICK, m_statTick);
     DDX_Control(pDX, IDC_STAT_EPE, m_statEPE);
     DDX_Control(pDX, IDC_CHK_PWR_OFF, m_chkPwrOff);
     DDX_Control(pDX, IDC_STAT_WTRLINE, m_statWaterLn);
     DDX_Control(pDX, IDC_BTN_BAUD_LOCAL, m_btnBaudLocal);
-    DDX_Control(pDX, IDC_STAT_MASK, m_statMask);
     DDX_Control(pDX, IDC_STAT_GPSFIX, m_statGpsFix);
     DDX_Control(pDX, IDC_STAT_LATLON, m_statLatLon);
     DDX_Control(pDX, IDC_STAT_UTC, m_statUTC);
@@ -197,15 +200,15 @@ BEGIN_MESSAGE_MAP(CGarminBinaryDlg, CDialog)
     ON_BN_CLICKED(IDC_BTN_GET_ID, OnBtnGetId)
     ON_CBN_CLOSEUP(IDC_CMBO_PORT, OnCloseupCmboPort)
     ON_WM_TIMER()
-    ON_BN_CLICKED(IDC_BTN_START_ASYNC, OnBtnStartAsync)
-    ON_BN_CLICKED(IDC_BTN_STOP_ASYNC, OnBtnStopAsync)
+    ON_BN_CLICKED(IDC_BTN_START_ASYNC, OnBtnAsyncOn)
+    ON_BN_CLICKED(IDC_BTN_STOP_ASYNC, OnBtnAsyncOff)
     ON_BN_CLICKED(IDC_BTN_ACK, OnBtnAck)
     ON_BN_CLICKED(IDC_BTN_CLEAR, OnBtnClear)
-    ON_BN_CLICKED(IDC_BTN_POS_ON, OnBtnPosOn)
-    ON_BN_CLICKED(IDC_BTN_POS_OFF, OnBtnPosOff)
+    ON_BN_CLICKED(IDC_BTN_POS_ON, OnBtnPvtOn)
+    ON_BN_CLICKED(IDC_BTN_POS_OFF, OnBtnPvtOff)
     ON_BN_CLICKED(IDC_BTN_ABOUT, OnBtnAbout)
-    ON_BN_CLICKED(IDC_BTN_LOG_ON, OnBtnLogOn)
-    ON_BN_CLICKED(IDC_BTN_LOG_OFF, OnBtnLogOff)
+    ON_BN_CLICKED(IDC_BTN_LOG_ON, OnBtnRecOn)
+    ON_BN_CLICKED(IDC_BTN_LOG_OFF, OnBtnRecOff)
     ON_BN_CLICKED(IDC_BTN_GET_LATLON, OnBtnGetLatLon)
     ON_BN_CLICKED(IDC_BTN_GET_UTC, OnBtnGetUTC)
     ON_BN_CLICKED(IDC_BTN_BAUD_UP, OnBtnBaudUp)
@@ -346,6 +349,10 @@ BOOL CGarminBinaryDlg::OnInitDialog()
     if(strRinexPath.Right(1) != "\\") strRinexPath += "\\";  // enforce path ends w/ backslash
     m_Profile.WriteProfileStr("MainConfig", "Gar2RnxPath" , strRinexPath);
 
+    // Get and set the options to GAR2RNX component, so this tag gets put in XML
+    CString strRinexOptions = m_Profile.GetProfileStr("MainConfig", "Gar2RnxOptions" , "-etrex");
+    m_Profile.WriteProfileStr("MainConfig", "Gar2RnxOptions" , strRinexOptions);
+
     // Use data from profile to set sticky fields.
     m_strSerialPort = m_Profile.GetProfileStr("MainConfig", "ComPort", "None");
     m_cmboPort.SelectString(-1, m_strSerialPort);
@@ -378,11 +385,8 @@ BOOL CGarminBinaryDlg::OnInitDialog()
     m_bIsLogging = false;
     G12State(STATE_IDLE);
 
-    // This turns on only async messages 36, 37, 38
-    mMask = 0x0020;
-
     // Set default recording time.
-    m_editRecTime.SetWindowText("10");
+    m_editRecTime.SetWindowText("30.0");
 
     // Set a custom icon for the Baud Sync button
     m_hIconBtn = AfxGetApp()->LoadIcon(IDI_ICON_BAUD);
@@ -401,6 +405,7 @@ void CGarminBinaryDlg::OnTimer(UINT nIDEvent)
     }
     else if(nIDEvent == _STATE_TIMER)
     {
+        UpdateBandwidth();
         G12State(STATE_NEXT);
     }
 
@@ -448,17 +453,15 @@ void CGarminBinaryDlg::OnBtnGetId()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void CGarminBinaryDlg::OnBtnStartAsync()
+void CGarminBinaryDlg::OnBtnAsyncOn()
 {
-    UpdateAsyncMask();
-
     ClearMsgBuff(&m_SendMsg);
 
     m_SendMsg.Start      = 0x10;
     m_SendMsg.CmdId      = MSG_ASYNC_CMD;
     m_SendMsg.SizeBytes  = 0x02;
-    m_SendMsg.Payload[0] = (char)mMask; // 0xFF;
-    m_SendMsg.Payload[1] = (char)mMask >> 8; // 0xFF;
+    m_SendMsg.Payload[0] = 0xFF;
+    m_SendMsg.Payload[1] = 0xFF;
     m_SendMsg.ChkSum     = CalcChksum(&m_SendMsg);
     m_SendMsg.End1       = 0x10;
     m_SendMsg.End2       = 0x03;
@@ -467,7 +470,24 @@ void CGarminBinaryDlg::OnBtnStartAsync()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void CGarminBinaryDlg::OnBtnStopAsync()
+void CGarminBinaryDlg::AsyncMaskOn()
+{
+    ClearMsgBuff(&m_SendMsg);
+
+    m_SendMsg.Start      = 0x10;
+    m_SendMsg.CmdId      = MSG_ASYNC_CMD;
+    m_SendMsg.SizeBytes  = 0x02;
+    m_SendMsg.Payload[0] = _ASYNC_MASK;
+    m_SendMsg.Payload[1] = 0;
+    m_SendMsg.ChkSum     = CalcChksum(&m_SendMsg);
+    m_SendMsg.End1       = 0x10;
+    m_SendMsg.End2       = 0x03;
+
+    SendMsg();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+void CGarminBinaryDlg::OnBtnAsyncOff()
 {
     ClearMsgBuff(&m_SendMsg);
 
@@ -484,14 +504,14 @@ void CGarminBinaryDlg::OnBtnStopAsync()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void CGarminBinaryDlg::OnBtnPosOn()
+void CGarminBinaryDlg::OnBtnPvtOn()
 {
     ClearMsgBuff(&m_SendMsg);
 
     m_SendMsg.Start      = 0x10;
     m_SendMsg.CmdId      = MSG_QUERY;
     m_SendMsg.SizeBytes  = 0x02;
-    m_SendMsg.Payload[0] = QUERY_POS_ON;
+    m_SendMsg.Payload[0] = QUERY_PVT_ON;
     m_SendMsg.Payload[1] = 0x00;
     m_SendMsg.ChkSum     = CalcChksum(&m_SendMsg);
     m_SendMsg.End1       = 0x10;
@@ -501,14 +521,14 @@ void CGarminBinaryDlg::OnBtnPosOn()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void CGarminBinaryDlg::OnBtnPosOff()
+void CGarminBinaryDlg::OnBtnPvtOff()
 {
     ClearMsgBuff(&m_SendMsg);
 
     m_SendMsg.Start      = 0x10;
     m_SendMsg.CmdId      = MSG_QUERY;
     m_SendMsg.SizeBytes  = 0x02;
-    m_SendMsg.Payload[0] = QUERY_POS_OFF;
+    m_SendMsg.Payload[0] = QUERY_PVT_OFF;
     m_SendMsg.Payload[1] = 0x00;
     m_SendMsg.ChkSum     = CalcChksum(&m_SendMsg);
     m_SendMsg.End1       = 0x10;
@@ -535,18 +555,20 @@ void CGarminBinaryDlg::OnBtnPwrOff()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void CGarminBinaryDlg::OnBtnLogOn()
+void CGarminBinaryDlg::OnBtnRecOn()
 {
     CString strValue;
     m_editRecTime.GetWindowText(strValue);
 
+    // Get record time from GUI.
+    mTickDown = (int)(atof(strValue) * 60); // min to sec
+
     CString str;
     str.Format(
-        "This will start recording a %s minute duration Garmin\r\n"\
+        "This will start recording a %d second duration Garmin\r\n"\
         "binary format observation file. At the end of recording,\r\n"\
-        "a Rinex format observation file will be created, suitable\r\n"\
-        "for post processing. Canada's CSRS PPP service can\r\n"\
-        "process single frequency (L1 only) data.", strValue);
+        "a Rinex format observation file will be created if the\r\n"\
+        "location of the GAR2RNX tool is properly configured.", mTickDown);
 
     AfxMessageBox(str, MB_ICONINFORMATION);
 
@@ -573,20 +595,22 @@ void CGarminBinaryDlg::OnBtnLogOn()
         G12State(STATE_START);
         m_bIsLogging = true;
 
-        // Get record time from GUI.
-        mTickDown = atoi(strValue) * 60; // min to sec
+        CString strValue;
+        strValue.Format("%d", mTickDown);
+        m_statTick.SetWindowText(strValue);
     }
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void CGarminBinaryDlg::OnBtnLogOff()
+void CGarminBinaryDlg::OnBtnRecOff()
 {
-    // If user manually terminates, don't power off GPS.
-    m_chkPwrOff.SetCheck(0);
 
     // Doesn't make sense unless recording.
     if(mG12State != STATE_IDLE)
     {
+        // If user manually terminates, don't power off GPS.
+        m_chkPwrOff.SetCheck(0);
+
         // Skip any remaining countdown time.
         G12State(STATE_STOP_REC);
     }
@@ -595,7 +619,8 @@ void CGarminBinaryDlg::OnBtnLogOff()
 /////////////////////////////////////////////////////////////////////////////
 void CGarminBinaryDlg::TickDown()
 {
-    --mTickDown;
+    // Subtract the number of seconds represented by each tick.
+    mTickDown -= (_STATE_TIMER_CMDS_MSECS / 1000);
 
     CString strValue;
     strValue.Format("%d", mTickDown);
@@ -914,8 +939,12 @@ CString CGarminBinaryDlg::Latitude2Str(double lat)
         latitude = -latitude;
     }
 
+    int latInt = (int)latitude;
+    double latMinutes = (latitude - latInt) * 60;
+
     // Format a string value of the latitude letter and value.
-    strValue.Format("%c%2.6f", latLetter, latitude);
+    // Uses format: H DD MM.MMMM
+    strValue.Format("%c %d*%02.4f'", latLetter, latInt, latMinutes);
 
     return strValue;
 }
@@ -936,8 +965,12 @@ CString CGarminBinaryDlg::Longitude2Str(double lon)
         longitude = -longitude;
     }
 
+    int lonInt = (int)longitude;
+    double lonMinutes = (longitude - lonInt) * 60;
+
     // Format a string value of the longitude letter and value.
-    strValue.Format("%c%2.6f", lonLetter, longitude);
+    // Uses format: H DD MM.MMMM
+    strValue.Format("%c%03d*%2.4f'", lonLetter, lonInt, lonMinutes);
 
     return strValue;
 }
@@ -1208,16 +1241,6 @@ void CGarminBinaryDlg::UpdateHighWater()
     m_statWaterLn.SetWindowText(str);
 }
 
-/////////////////////////////////////////////////////////////////////////////
-void CGarminBinaryDlg::UpdateAsyncMask()
-{
-    if(mMask == 0) mMask = 1;
-
-    CString str;
-    str.Format("0x%04X", mMask);
-    m_statMask.SetWindowText(str);
-}
-
 // Newer Garmin GPS receivers seem to support these rates:
 // 9600, 19200, 38400, 57600, 115200
 // Older receivers are reported to support only up to 38400.
@@ -1410,6 +1433,9 @@ void CGarminBinaryDlg::G12State(e_STATE_TYPE state)
     {
         AddToDisplay("STATE_START", 0);
 
+        // Make sure all periodic messages are off.
+        OnBtnAsyncOff();
+
         // Start the state transition timer.
         SetTimer(_STATE_TIMER, _STATE_TIMER_CMDS_MSECS, NULL);
 
@@ -1450,21 +1476,27 @@ void CGarminBinaryDlg::G12State(e_STATE_TYPE state)
     {
         AddToDisplay("STATE_PVT_ON", 0);
 
+        // Set longer state timer for this state.
+        SetTimer(_STATE_TIMER, _STATE_TIMER_CMDS_MSECS * 4, NULL);
+
         // Turn on once per second PVT messages from GPS.
-        OnBtnPosOn();
+        OnBtnPvtOn();
 
         // Next state.
         mG12State = STATE_ASYNC_ON;
     }
     else if(mG12State == STATE_ASYNC_ON)
     {
+        // Resume normal period for state timer.
+        SetTimer(_STATE_TIMER, _STATE_TIMER_CMDS_MSECS, NULL);
+
         // Turn off PVT messages.
-        OnBtnPosOff();
+        OnBtnPvtOff();
 
         AddToDisplay("STATE_ASYNC_ON", 0);
 
-        // Start asyncronous message output from GPS.
-        OnBtnStartAsync();
+        // Start asyncronous output of specific messages from GPS.
+        AsyncMaskOn();
 
         CString strValue;
         strValue.Format("%d", mTickDown);
@@ -1490,7 +1522,7 @@ void CGarminBinaryDlg::G12State(e_STATE_TYPE state)
         m_bIsLogging = false;
         if(m_OutFile.m_hFile != CFile::hFileNull) m_OutFile.Close();
 
-        OnBtnStopAsync();
+        OnBtnAsyncOff();
 
         // Next state.
         mG12State = STATE_GPS_OFF;
@@ -1513,6 +1545,9 @@ void CGarminBinaryDlg::G12State(e_STATE_TYPE state)
         // Stop the state transition timer.
         KillTimer(_STATE_TIMER);
 
+        // The bandwidth is not measured unless recording file.
+        m_statBandwidth.SetWindowText("");
+
         // Spawn process to convert to Rinex.
         OnBtnGar2rnx();
 
@@ -1520,8 +1555,6 @@ void CGarminBinaryDlg::G12State(e_STATE_TYPE state)
     }
     else // IDLE state is the end. Once in Idle, stay in Idle.
     {
-        AddToDisplay("STATE_IDLE", 0);
-
         // Stay in IDLE.
         mG12State = STATE_IDLE;
     }
@@ -1532,13 +1565,14 @@ void CGarminBinaryDlg::OnBtnGar2rnx()
 {
     // get the path to the Rinex creator.
     CString strRinexPath = m_Profile.GetProfileStr("MainConfig", "Gar2RnxPath" , "");
+    CString strRinexOpts = m_Profile.GetProfileStr("MainConfig", "Gar2RnxOptions" , "-etrex");
 
     // Change last letter of G12 filename to "O"
     CString strFileNameRinex = m_strFileNameG12.Left(m_strFileNameG12.GetLength()-1) + "O";
 
     // Form a string to execute the command.
-    CString strRinexExec = strRinexPath + "gar2rnx.exe " + m_strFileNameG12 + " -etrex > " +
-                           strFileNameRinex;
+    CString strRinexExec = strRinexPath + "gar2rnx.exe " + m_strFileNameG12 + " " +
+                           strRinexOpts + " > " + strFileNameRinex;
 
     // Display the full invocation command line.
     AddToDisplay(strRinexExec, 0);
@@ -1604,9 +1638,20 @@ CString CGarminBinaryDlg::GetGarminBinaryFilename()
     int julday = tmGmt.tm_yday + 1;
     char hour = tmGmt.tm_hour + 'a';
     int year = tmGmt.tm_year - 100;
+    int minute = tmGmt.tm_min;
 
     CString strFilename;
-    strFilename.Format("grmn%d%c.%02dG", julday, hour, year);
+    strFilename.Format("grmn%d%c%02d.%02dG", julday, hour, minute, year);
 
     return strFilename;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+void CGarminBinaryDlg::UpdateBandwidth()
+{
+    CString strValue;
+
+    // This function is called once every second, so period argument is 1.0
+    strValue.Format("%5.1f bps", m_Serial.CalcBandwidth(1.0));
+    m_statBandwidth.SetWindowText(strValue);
 }
