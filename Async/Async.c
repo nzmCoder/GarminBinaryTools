@@ -23,6 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /****************************************************************************
 
+1.25   * TRACE_IO option should be off in release version.
+       * Still some failures with eTrex, but fail limit is 5000.
+
 1.24   * Changes 2016 by N. Moulton
        * Removed Linux option
        * Reformated source code
@@ -51,10 +54,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ****************************************************************************/
 
-#define VERSION 1.24
+#define VERSION 1.25
 
 //Uncomment this only for serial IO debugging  purposes
-#define TRACE_IO
+//#define TRACE_IO
 
 #include <stdio.h>
 #include <stdlib.h>
