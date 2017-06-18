@@ -1,0 +1,3 @@
+This compiles with Microsoft Visual Studio 2017.
+I am using the free Community Edition.
+Need to install the MFC component.
