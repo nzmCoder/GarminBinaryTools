@@ -1,7 +1,7 @@
 /****************************************************************************
 GARMIN BINARY EXPLORER for Garmin GPS Receivers that support serial I/O.
 
-Copyright (C) 2016 Norm Moulton
+Copyright (C) 2016-2017 Norm Moulton
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -24,6 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #if !defined(AFX_STDAFX_H__10DC240A_644A_4F0E_9E3B_D7DF7BFE3132__INCLUDED_)
 #define AFX_STDAFX_H__10DC240A_644A_4F0E_9E3B_D7DF7BFE3132__INCLUDED_
+
+// Allow compilation in Visual Studio 2017
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x05010000
+#define _CRT_SECURE_NO_WARNINGS
+#define _AFX_NO_MFC_CONTROLS_IN_DIALOGS
+#endif
 
 #if _MSC_VER > 1000
 #pragma once

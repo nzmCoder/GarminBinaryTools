@@ -1,4 +1,4 @@
-//Microsoft Developer Studio generated resource script.
+// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -27,18 +25,18 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE 
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE 
 BEGIN
     "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
     "#define _AFX_NO_OLE_RESOURCES\r\n"
@@ -66,104 +64,86 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON    DISCARDABLE     "res\\GarminBinary.ico"
-IDI_ICON_BAUD           ICON    DISCARDABLE     "res\\BaudSync.ico"
+IDR_MAINFRAME           ICON                    "res\\GarminBinary.ico"
+
+IDI_ICON_BAUD           ICON                    "res\\BaudSync.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOG DISCARDABLE  0, 0, 304, 182
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_ABOUTBOX DIALOGEX 0, 0, 319, 182
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About GarminBinary"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,271,10,20,20
-    DEFPUSHBUTTON   "OK",IDOK,127,161,50,14,WS_GROUP
-    LTEXT           "",IDC_STAT_TEXT,7,34,290,122,SS_SUNKEN
+    ICON            IDR_MAINFRAME,IDC_STATIC,282,7,14,13
+    DEFPUSHBUTTON   "OK",IDOK,134,161,50,14,WS_GROUP
+    LTEXT           "",IDC_STAT_TEXT,7,34,305,122,SS_SUNKEN
     LTEXT           "Static",IDC_STAT_BUILD_DATE,7,15,219,8
 END
 
 IDD_MAIN_DLG DIALOGEX 0, 0, 644, 231
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "GarminBinary"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     PUSHBUTTON      "Get ID",IDC_BTN_GET_ID,7,25,50,14
     LTEXT           "Comm Port:",IDC_STATIC,7,7,50,14,SS_CENTERIMAGE
-    COMBOBOX        IDC_CMBO_PORT,61,7,45,145,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    EDITTEXT        IDC_EDIT_MSGS,7,93,630,131,ES_MULTILINE | ES_WANTRETURN | 
-                    WS_VSCROLL | WS_HSCROLL
-    CTEXT           "---  Output Console  ---",IDC_STATIC,227,82,189,8,
-                    SS_CENTERIMAGE
+    COMBOBOX        IDC_CMBO_PORT,61,7,45,145,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_EDIT_MSGS,7,93,630,131,ES_MULTILINE | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
+    CTEXT           "---  Output Console  ---",IDC_STATIC,227,82,189,8,SS_CENTERIMAGE
     PUSHBUTTON      "Async On",IDC_BTN_ASYNC_ON,228,7,50,14
     PUSHBUTTON      "Async Off",IDC_BTN_ASYNC_OFF,228,25,50,14
-    PUSHBUTTON      "ACK",IDC_BTN_ACK,587,43,50,14,NOT WS_VISIBLE
     PUSHBUTTON      "Clear Stats",IDC_BTN_CLEAR,479,62,50,14
-    LTEXT           "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ",
-                    IDC_STAT_GPS_ID_RSP,61,25,162,14,SS_CENTERIMAGE | 
-                    SS_SUNKEN
+    LTEXT           "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ",IDC_STAT_GPS_ID_RSP,61,25,162,14,SS_CENTERIMAGE | SS_SUNKEN
     PUSHBUTTON      "PVT On",IDC_BTN_PVT_ON,282,7,50,14
     PUSHBUTTON      "PVT Off",IDC_BTN_PVT_OFF,282,25,50,14
-    LTEXT           "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ",
-                    IDC_STAT_MSG_ID_SEEN,61,62,236,14,SS_CENTERIMAGE | 
-                    SS_SUNKEN
-    LTEXT           "Msgs Seen:",IDC_STATIC,7,62,50,14,SS_CENTERIMAGE
-    LTEXT           "9600",IDC_STAT_BAUD,181,7,27,14,SS_CENTERIMAGE | 
-                    SS_SUNKEN
+    LTEXT           "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - ",IDC_STAT_MSG_ID_SEEN,61,62,236,14,SS_CENTERIMAGE | SS_SUNKEN
+    LTEXT           "Msgs Seen:",IDC_STATIC_MSGS_LBL,7,62,50,14,SS_NOTIFY | SS_CENTERIMAGE
+    LTEXT           "9600",IDC_STAT_BAUD,181,7,27,14,SS_CENTERIMAGE | SS_SUNKEN
     LTEXT           "Baud:",IDC_STATIC,142,7,20,14,SS_CENTERIMAGE
     PUSHBUTTON      "About",IDC_BTN_ABOUT,587,7,50,14
-    LTEXT           "Frame Errors:",IDC_STATIC,303,62,50,14,SS_CENTERIMAGE
-    LTEXT           "0",IDC_STAT_ERR_FRMS,357,62,27,14,SS_CENTERIMAGE | 
-                    SS_SUNKEN
+    LTEXT           "Frame Errors:",IDC_STATIC_FRMERRS_LBL,303,62,50,14,SS_NOTIFY | SS_CENTERIMAGE
+    LTEXT           "0",IDC_STAT_ERR_FRMS,357,62,27,14,SS_CENTERIMAGE | SS_SUNKEN
     PUSHBUTTON      "Start Rec File",IDC_BTN_REC_ON,336,7,50,14
     PUSHBUTTON      "Stop Rec File",IDC_BTN_REC_OFF,336,25,50,14
     PUSHBUTTON      "Get Lat/Lon",IDC_BTN_GET_LATLON,7,43,50,14
     PUSHBUTTON      "Get UTC",IDC_BTN_GET_UTC,173,43,50,14
-    LTEXT           "- - - - - - - - - - - - - - - - - -",IDC_STAT_UTC,228,
-                    43,95,14,SS_CENTERIMAGE | SS_SUNKEN
-    LTEXT           "- - - - - - - - - - - - - - - - - - - - - - ",
-                    IDC_STAT_LATLON,61,43,109,14,SS_CENTERIMAGE | SS_SUNKEN
-    LTEXT           "Fix Quality:",IDC_STATIC,327,43,37,14,SS_CENTERIMAGE
-    LTEXT           "0",IDC_STAT_GPSFIX,368,43,18,14,SS_CENTERIMAGE | 
-                    SS_SUNKEN
+    LTEXT           "- - - - - - - - - - - - - - - - - -",IDC_STAT_UTC,228,43,95,14,SS_CENTERIMAGE | SS_SUNKEN
+    LTEXT           "- - - - - - - - - - - - - - - - - - - - - - ",IDC_STAT_LATLON,61,43,109,14,SS_CENTERIMAGE | SS_SUNKEN
+    LTEXT           "Fix Quality:",IDC_STATIC_FIX_LBL,327,43,37,14,SS_NOTIFY | SS_CENTERIMAGE
+    LTEXT           "0",IDC_STAT_GPSFIX,368,43,18,14,SS_CENTERIMAGE | SS_SUNKEN
     PUSHBUTTON      ">>",IDC_BTN_BAUD_UP,211,7,12,14
     PUSHBUTTON      "<<",IDC_BTN_BAUD_DN,166,7,12,14
-    PUSHBUTTON      "",IDC_BTN_BAUD_LOCAL,119,7,17,14,BS_ICON,
-                    WS_EX_TRANSPARENT
-    LTEXT           "0",IDC_STAT_WTRLINE,440,62,34,14,SS_CENTERIMAGE | 
-                    SS_SUNKEN
-    LTEXT           "Water Line:",IDC_STATIC,393,62,38,14,SS_CENTERIMAGE
+    PUSHBUTTON      "",IDC_BTN_BAUD_LOCAL,119,7,17,14,BS_ICON,WS_EX_TRANSPARENT
+    LTEXT           "0",IDC_STAT_WTRLINE,440,62,34,14,SS_CENTERIMAGE | SS_SUNKEN
+    LTEXT           "Water Line:",IDC_STATIC_WL_LBL,393,62,38,14,SS_NOTIFY | SS_CENTERIMAGE
     PUSHBUTTON      "Pwr Off Now",IDC_BTN_PWR_OFF,479,25,50,14
-    CONTROL         "Power Off when done",IDC_CHK_PWR_OFF,"Button",
-                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,479,5,55,18
-    LTEXT           "- - - - - - -",IDC_STAT_EPE,440,43,34,14,SS_CENTERIMAGE | 
-                    SS_SUNKEN
-    LTEXT           "Est. Error:",IDC_STATIC,393,43,38,14,SS_CENTERIMAGE
-    PUSHBUTTON      "Gar2Rnx",IDC_BTN_GAR2RNX,587,25,50,14,NOT WS_VISIBLE
-    LTEXT           "0",IDC_STAT_TICK,414,25,21,14,SS_CENTERIMAGE | 
-                    SS_SUNKEN
-    LTEXT           "Tick:",IDC_STATIC,393,25,18,14,SS_CENTERIMAGE
+    CONTROL         "Power Off when done",IDC_CHK_PWR_OFF,"Button",BS_AUTOCHECKBOX | BS_MULTILINE | BS_NOTIFY | WS_TABSTOP,479,5,55,18
+    LTEXT           "- - - - - - -",IDC_STAT_EPE,440,43,34,14,SS_CENTERIMAGE | SS_SUNKEN
+    LTEXT           "Est. Error:",IDC_STATIC_EPE_LBL,393,43,38,14,SS_NOTIFY | SS_CENTERIMAGE
+    LTEXT           "0",IDC_STAT_TICK,414,25,21,14,SS_CENTERIMAGE | SS_SUNKEN
+    LTEXT           "Tick:",IDC_STAT_TICK_LBL,393,25,18,14,SS_NOTIFY | SS_CENTERIMAGE
     EDITTEXT        IDC_EDIT_REC_TIME,414,7,21,14,ES_AUTOHSCROLL
-    LTEXT           "Rec:",IDC_STATIC,393,7,16,14,SS_CENTERIMAGE
+    LTEXT           "Rec:",IDC_STATIC_REC_LBL,393,7,16,14,SS_NOTIFY | SS_CENTERIMAGE
     LTEXT           "minutes",IDC_STATIC,440,7,26,14,SS_CENTERIMAGE
     LTEXT           "seconds",IDC_STATIC,440,25,31,14,SS_CENTERIMAGE
     LTEXT           "",IDC_STAT_BW,479,43,50,14,SS_CENTERIMAGE | SS_SUNKEN
 END
 
 
-#ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,12,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -176,17 +156,15 @@ VS_VERSION_INFO VERSIONINFO
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904B0"
+        BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "GarminBinary MFC Application\0"
-            VALUE "FileVersion", "1, 0, 0, 1\0"
-            VALUE "InternalName", "GarminBinary\0"
-            VALUE "LegalCopyright", "Copyright (C) 2016\0"
-            VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "GarminBinary.EXE\0"
-            VALUE "ProductName", "GarminBinary Application\0"
-            VALUE "ProductVersion", "1, 0, 0, 1\0"
+            VALUE "FileDescription", "GarminBinary MFC Application"
+            VALUE "FileVersion", "1.0.0.0"
+            VALUE "InternalName", "GarminBinary"
+            VALUE "LegalCopyright", "Copyright (C) 2016-2017"
+            VALUE "OriginalFilename", "GarminBinary.EXE"
+            VALUE "ProductName", "GarminBinary Application"
+            VALUE "ProductVersion", "1.12.0.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -195,8 +173,6 @@ BEGIN
     END
 END
 
-#endif    // !_MAC
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -204,12 +180,12 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 297
+        RIGHTMARGIN, 312
         TOPMARGIN, 7
         BOTTOMMARGIN, 175
     END
@@ -400,15 +376,31 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_ABOUTBOX AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_MAIN_DLG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE
 BEGIN
     IDS_ABOUTBOX            "&About GarminBinary..."
 END
 
-#endif    // English (U.S.) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
