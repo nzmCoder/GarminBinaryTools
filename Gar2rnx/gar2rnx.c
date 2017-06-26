@@ -3471,7 +3471,7 @@ BOOLEAN info_frame(ULONG N_frame,char* info_msg)
         case 0:
             ptr+=sprintf(ptr,"Dummy sat(no data)\n");
             break;
-        case -1:
+        case (BYTE)-1:
             ptr+=sprintf(ptr,"\n");
             break;
         case 25:
@@ -3923,11 +3923,11 @@ void print_help(char **argv)
 
     sprintf(help,
             "-----------------------------------------------------------------\n"\
-            "Gar2rnx (Garmin to Rinex) generates rinex2 compliant files fromv \n"\
+            "Gar2rnx (Garmin to Rinex) generates rinex2 compliant files from  \n"\
             "data obtained with some Garmin handhelds using the async logger  \n"\
             "-----------------------------------------------------------------\n"\
             "Version 1.48, Copyright 2000-2002 Antonio Tabernero Galan        \n"\
-            "Version %4.2f, Copyright 2016 Norm Moulton                        \n"\
+            "Version %4.2f, Copyright 2016-2017 Norm Moulton                  \n"\
             "-----------------------------------------------------------------\n",VERSION);
 
 

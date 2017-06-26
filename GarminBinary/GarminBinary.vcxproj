@@ -161,12 +161,8 @@
     <ClInclude Include="StdAfx.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\BaudSync.bmp" />
     <Image Include="res\BaudSync.ico" />
-    <Image Include="res\bitmap1.bmp" />
     <Image Include="res\GarminBinary.ico" />
-    <Image Include="res\icon1.ico" />
-    <Image Include="res\icon_baud.ico" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="res\GarminBinary.rc2" />

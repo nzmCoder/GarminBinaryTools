@@ -325,9 +325,9 @@ void CProfile::_WriteElement(CFile& file, CString strSection, CString strEntry, 
 {
     CString str;
     str.Format("<element section=\"%s\" entry=\"%s\" value=\"%s\"></element>\r\n",
-               strSection,
-               strEntry,
-               strValue);
+               strSection.GetString(),
+               strEntry.GetString(),
+               strValue.GetString());
 
     file.Write(str, str.GetLength());
 }

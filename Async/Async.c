@@ -2,7 +2,7 @@
 ASYNC MESSAGE LOGGER for selected Garmin GPS Receivers
 
 Copyright (C) 2000-2002 Antonio Tabernero
-Copyright (C) 2016 Norm Moulton
+Copyright (C) 2016-2017 Norm Moulton
 Created 28 Jun 2000, Last modified 23 Mar 2002, Antonio Tabernero.
 Modifications started 30 May 2016, Norm Moulton
 
@@ -97,7 +97,9 @@ FILE* TRACE;
 #define DEF_VERBOSE_LEVEL   1           // Verbosity level
 
 #define DEF_PORT  "COM1"
-#define M_PI      3.141592653589793
+#ifndef M_PI
+#define M_PI      3.14159265358979323846
+#endif
 
 static const char MONTH[12][4] = {"Jan", "Feb", "Mar", "Apr", "May",
                                   "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"

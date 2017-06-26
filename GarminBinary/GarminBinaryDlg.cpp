@@ -65,6 +65,10 @@ static char THIS_FILE[] = __FILE__;
 // Millisecond timer period for commands and responses
 #define _STATE_TIMER_CMDS_MSECS 1000
 
+// Define the hi/lo baud rates supported
+static const CString s_StrLoBaud = "9600";
+static const CString s_StrHiBaud = "57600";
+
 // Serial driver
 CSerial m_Serial;
 
@@ -136,6 +140,7 @@ BOOL CAboutDlg::OnInitDialog()
 
     m_strAboutText =
         "GARMIN BINARY EXPLORER for Garmin GPS Receivers that support serial I/O.\r\n"\
+        "Please let me know your experience. Contact normmoulton at yahoo dot com.\r\n"\
         "Copyright (C) 2016-2017 Norm Moulton\r\n"\
         "\r\n"\
         "This program is free software: you can redistribute it and/or modify "\
@@ -350,7 +355,7 @@ BOOL CGarminBinaryDlg::OnInitDialog()
     if(pSysMenu != NULL)
     {
         CString strAboutMenu;
-        strAboutMenu.LoadString(IDS_ABOUTBOX);
+        (void)strAboutMenu.LoadString(IDS_ABOUTBOX);
         if(!strAboutMenu.IsEmpty())
         {
             pSysMenu->AppendMenu(MF_SEPARATOR);
@@ -420,6 +425,11 @@ BOOL CGarminBinaryDlg::OnInitDialog()
     m_pRcv = (char*)&m_RecvMsg;
     m_lastRecv = 0;
 
+    // Set default recording time.
+    CString str;
+    str = m_Profile.GetProfileStr("MainConfig", "RecTime", "30.0");
+    m_editRecTime.SetWindowText(str);
+
     // Format the protocol message window with a fixed width font.
     m_Font.CreateFont(12, 0, 0, 0, FW_NORMAL, 0, 0, 0,
                       DEFAULT_CHARSET, OUT_CHARACTER_PRECIS, CLIP_CHARACTER_PRECIS,
@@ -442,9 +452,6 @@ BOOL CGarminBinaryDlg::OnInitDialog()
 
     m_bIsLogging = false;
     G12State(STATE_IDLE);
-
-    // Set default recording time.
-    m_editRecTime.SetWindowText("20.0");
 
     // Set a custom icon for the Baud Sync button
     m_hIconBtn = AfxGetApp()->LoadIcon(IDI_ICON_BAUD);
@@ -496,7 +503,7 @@ void CGarminBinaryDlg::OnDropdownCmboPort()
     // Use QueryDosDevice to return all the com ports,
     // then sort them into correct order using a map.
     static const int BUFF_SIZE = 0xFFFF;
-    char szDevices[BUFF_SIZE];
+    char* szDevices = new char[BUFF_SIZE];
     unsigned long dwChars = QueryDosDevice(0, szDevices, BUFF_SIZE);
     char* ptr = szDevices;
     std::map<int, std::string> comPortMap;
@@ -536,6 +543,8 @@ void CGarminBinaryDlg::OnDropdownCmboPort()
             m_cmboPort.AddString(str.c_str());
         }
     }
+
+    delete [] szDevices;
 
     // Try to restore the current selection choice.
     m_cmboPort.SetCurSel(m_cmboPort.FindStringExact(0, strCurrSelection));
@@ -696,11 +705,30 @@ void CGarminBinaryDlg::OnBtnPwrOff()
 ///<summary>GUI button message handler.</summary>
 void CGarminBinaryDlg::OnBtnRecOn()
 {
+    if(IsAtLoBaud())
+    {
+        CString str;
+        str =
+            "For best recording results it is strongly\n"\
+            "recommended to step up to high baud rate.\n"\
+            "OK to record at low baud or Cancel?";
+
+        if(IDOK != AfxMessageBox(str, MB_ICONEXCLAMATION | MB_OKCANCEL))
+        {
+            // Cancel the process.
+            return;
+        }
+    }
+
+    // Get value from GUI
     CString strValue;
     m_editRecTime.GetWindowText(strValue);
 
-    // Get record time from GUI.
-    mTickDown = (unsigned int)(atof(strValue) * 60); // min to sec
+    // Update sticky setting for this.
+    m_Profile.WriteProfileStr("MainConfig", "RecTime", strValue);
+
+    // Parse recording time, add a few seconds for state machine overhead.
+    mTickDown = (unsigned int)((atof(strValue) * 60) + 10); // min to sec
     if(mTickDown == 0 || mTickDown > 86400)
     {
         mTickDown = 86400;
@@ -734,7 +762,7 @@ void CGarminBinaryDlg::OnBtnRecOn()
         if(!m_OutFile.Open(m_strFileNameG12, CFile::modeCreate | CFile::modeWrite | CFile::typeBinary))
         {
             CString str;
-            str.Format("Cannot write file: %s", m_strFileNameG12);
+            str.Format("Cannot write file: %s", m_strFileNameG12.GetString());
             AfxMessageBox(str);
 
             // Cancel the process.
@@ -860,7 +888,7 @@ void CGarminBinaryDlg::SetupPort()
         // Change e.g. "COM1" to -> "\\\\.\\COM1"
         // This format is "fully qualified" and always works.
         CString str;
-        str.Format("\\\\.\\%s", m_strSerialPort);
+        str.Format("\\\\.\\%s", m_strSerialPort.GetString());
 
         // Open the port and suggest to the driver to use large buffers.
         // But the actual buffer size is constrained by the hardware.
@@ -928,7 +956,7 @@ void CGarminBinaryDlg::RecvMsg()
     {
         // incr number bytes seen in this grouping
         ++nNum;
-		
+
         // This part finds DLEs and end of frames.
         if(sLastbyte == 0x10 && byte == 0x10)
         {
@@ -980,7 +1008,7 @@ void CGarminBinaryDlg::RecvMsg()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-///<summary>Calculate and return the Garmin checksum 
+///<summary>Calculate and return the Garmin checksum
 /// for the current message.</summary>
 t_UINT8 CGarminBinaryDlg::CalcChksum(t_MSG_FORMAT *pMsg)
 {
@@ -1017,7 +1045,7 @@ void CGarminBinaryDlg::DisplayMsg(t_MSG_FORMAT *pMsg)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-///<summary>Convert message buffer to human readable 
+///<summary>Convert message buffer to human readable
 /// hexadecimal string.</summary>
 CString CGarminBinaryDlg::DecodeMsgBuff(t_MSG_FORMAT *pMsg)
 {
@@ -1048,7 +1076,7 @@ CString CGarminBinaryDlg::DecodeMsgBuff(t_MSG_FORMAT *pMsg)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-///<summary>Convert message buffer containing UTC time to human readable 
+///<summary>Convert message buffer containing UTC time to human readable
 /// string.</summary>
 CString CGarminBinaryDlg::DecodeUTC()
 {
@@ -1158,10 +1186,9 @@ void CGarminBinaryDlg::DecodeLatLon()
     t_GPS_LATLON* pLatLon = (t_GPS_LATLON*)m_RecvMsg.Payload;
 
     // Format a string of the full latitude and longitude values.
-    CString strValue;
-    strValue.Format("%s %s",
-                    Latitude2Str(pLatLon->latitude),
-                    Longitude2Str(pLatLon->longitude));
+    CString strValue =
+        Latitude2Str(pLatLon->latitude) + " " +
+        Longitude2Str(pLatLon->longitude);
 
     m_statLatLon.SetWindowText(strValue);
 
@@ -1213,9 +1240,8 @@ void CGarminBinaryDlg::DecodePVT()
     m_statEPE.SetWindowText(strValue);
 
     // Format a string of the latitude and longitude.
-    strValue.Format("%s %s",
-                    Latitude2Str(pPVT->lat),
-                    Longitude2Str(pPVT->lon));
+    strValue = Latitude2Str(pPVT->lat) + " " +
+               Longitude2Str(pPVT->lon);
     m_statLatLon.SetWindowText(strValue);
 
     // Time is total seconds since midnight UTC 1-Jan-1990
@@ -1371,7 +1397,7 @@ void CGarminBinaryDlg::AddToDisplay(CString strHdr, t_MSG_FORMAT* pMsg = 0)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-///<summary>Check if the current message has been seen before and if not, 
+///<summary>Check if the current message has been seen before and if not,
 /// update the array that keeps track and update the display.</summary>
 void CGarminBinaryDlg::UpdateMsgSeen()
 {
@@ -1420,11 +1446,11 @@ void CGarminBinaryDlg::UpdateHighWater()
 ///<summary>Update the GUI field that displays the current bandwidth.</summary>
 void CGarminBinaryDlg::UpdateBandwidth()
 {
-	CString strValue;
+    CString strValue;
 
-	// This function is called once every second, so period argument is 1.0
-	strValue.Format("%5.1f bps", m_Serial.CalcBandwidth(1.0));
-	m_statBandwidth.SetWindowText(strValue);
+    // This function is called once every second, so period argument is 1.0
+    strValue.Format("%5.1f bps", m_Serial.CalcBandwidth(1.0));
+    m_statBandwidth.SetWindowText(strValue);
 }
 
 // Newer Garmin GPS receivers seem to support these rates:
@@ -1590,22 +1616,15 @@ void CGarminBinaryDlg::ConfirmNewBaud()
 ///<summary>GUI button message handler.</summary>
 void CGarminBinaryDlg::OnBtnBaudLocal()
 {
-    // Define the hi/lo baud rates supported
-    const CString strLo = "9600";
-    const CString strHi = "57600";
-
-    CString str;
-    m_statBaud.GetWindowText(str);
-
-    if(str == strLo)
+    if(IsAtLoBaud())
     {
-        m_statBaud.SetWindowText(strHi);
-        m_Serial.Setup((CSerial::EBaudrate)atoi(strHi), CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
+        m_statBaud.SetWindowText(s_StrHiBaud);
+        m_Serial.Setup((CSerial::EBaudrate)atoi(s_StrHiBaud), CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
     }
     else
     {
-        m_statBaud.SetWindowText(strLo);
-        m_Serial.Setup((CSerial::EBaudrate)atoi(strLo), CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
+        m_statBaud.SetWindowText(s_StrLoBaud);
+        m_Serial.Setup((CSerial::EBaudrate)atoi(s_StrLoBaud), CSerial::EData8, CSerial::EParNone, CSerial::EStop1);
     }
 }
 
@@ -1840,4 +1859,20 @@ CString CGarminBinaryDlg::GetGarminBinaryFilename()
     strFilename.Format("grmn%d%c%02d.%02dG", julday, hour, minute, year);
 
     return strFilename;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+/// <summary>Determines if serial port is set to low baud.</summary>
+bool CGarminBinaryDlg::IsAtLoBaud()
+{
+    bool retVal = false;
+    CString str;
+    m_statBaud.GetWindowText(str);
+
+    if(str != s_StrHiBaud)
+    {
+        retVal = true;
+    }
+
+    return retVal;
 }

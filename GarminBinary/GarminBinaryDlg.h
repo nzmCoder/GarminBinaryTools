@@ -74,6 +74,7 @@ public:
     void AsyncMaskOn();
     void CallGar2rnx();
     void SendAck();
+    bool IsAtLoBaud();
 
 // Dialog Controls
     enum { IDD = IDD_MAIN_DLG };

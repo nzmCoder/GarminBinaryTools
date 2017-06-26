@@ -1,0 +1,1 @@
+This is set up to compile with Eclipse/CDT CDT and MinGW.
