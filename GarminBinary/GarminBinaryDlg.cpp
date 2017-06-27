@@ -394,7 +394,7 @@ BOOL CGarminBinaryDlg::OnInitDialog()
         m_ToolTip.AddTool(&m_btnAsyncOff, "Turn off all asynchronous messages from GPS.");
 
         m_ToolTip.AddTool(&m_statEpeLabel, "GPS calculated Estimated Position Error, (EPE).");
-        m_ToolTip.AddTool(&m_statFixQuality, "GPS solution quality. 1 = poor, 4/5 = best.");
+        m_ToolTip.AddTool(&m_statFixQuality, "GPS solution quality. 1 = poor, 3 and 5 = best.");
 
         m_ToolTip.AddTool(&m_btnClearStats, "Reset Msgs Seen, Frame Errors, and Water Line fields.");
         m_ToolTip.AddTool(&m_statFrameErrsLabel, "Number of messages from GPS rejected due to bad checksum. (Should be zero.)");
@@ -408,7 +408,7 @@ BOOL CGarminBinaryDlg::OnInitDialog()
     m_Profile.Init();
 
     // Get and set the path to the GAR2RNX component, so this tag gets put in XML
-    CString strRinexPath = m_Profile.GetProfileStr("MainConfig", "Gar2RnxPath" , "C:\\Projects\\GarminTools\\Gar2rnx\\Release\\");
+    CString strRinexPath = m_Profile.GetProfileStr("MainConfig", "Gar2RnxPath" , "C:\\Projects\\GarminTools\\Bin\\");
     if(strRinexPath.Right(1) != "\\") strRinexPath += "\\";  // enforce path ends w/ backslash
     m_Profile.WriteProfileStr("MainConfig", "Gar2RnxPath" , strRinexPath);
 

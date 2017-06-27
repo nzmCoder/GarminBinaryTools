@@ -1,7 +1,7 @@
 /****************************************************************************
 GARMIN BINARY EXPLORER for Garmin GPS Receivers that support serial I/O.
 
-Copyright (C) 2016 Norm Moulton
+Copyright (C) 2016-2017 Norm Moulton
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -112,7 +112,7 @@ void CProfile::ClearProfile()
 {
     CFile file;
 
-    // delete the INI file
+    // delete the XML file
     file.Remove(m_strDataFullPath);
 }
 

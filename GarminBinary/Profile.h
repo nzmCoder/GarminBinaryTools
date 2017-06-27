@@ -1,7 +1,7 @@
 /****************************************************************************
 GARMIN BINARY EXPLORER for Garmin GPS Receivers that support serial I/O.
 
-Copyright (C) 2016 Norm Moulton
+Copyright (C) 2016-2017 Norm Moulton
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,12 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************/
 // Profile.h: interface for the CProfile class.
 
-#ifndef PROFILE_H__INCLUDED_
-#define PROFILE_H__INCLUDED_
-
-#if _MSC_VER > 1000
 #pragma once
-#endif // _MSC_VER > 1000
 
 class CProfile
 {
@@ -68,5 +63,3 @@ private:
     bool m_bNeedsSave;
     const CString m_strDataFileName;
 };
-
-#endif

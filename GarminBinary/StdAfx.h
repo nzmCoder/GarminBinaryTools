@@ -22,20 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //      are changed infrequently
 //
 
-#if !defined(AFX_STDAFX_H__10DC240A_644A_4F0E_9E3B_D7DF7BFE3132__INCLUDED_)
-#define AFX_STDAFX_H__10DC240A_644A_4F0E_9E3B_D7DF7BFE3132__INCLUDED_
+#pragma once
 
-// Allow compilation in Visual Studio 2017
-#ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x05010000
 #define _CRT_SECURE_NO_WARNINGS
 #define _AFX_NO_MFC_CONTROLS_IN_DIALOGS
-#endif
-
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #define VC_EXTRALEAN        // Exclude rarely-used stuff from Windows headers
 
 #include <afxwin.h>         // MFC core and standard components
@@ -44,9 +35,3 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef _AFX_NO_AFXCMN_SUPPORT
 #include <afxcmn.h>         // MFC support for Windows Common Controls
 #endif // _AFX_NO_AFXCMN_SUPPORT
-
-
-//{{AFX_INSERT_LOCATION}}
-// Microsoft Visual C++ will insert additional declarations immediately before the previous line.
-
-#endif // !defined(AFX_STDAFX_H__10DC240A_644A_4F0E_9E3B_D7DF7BFE3132__INCLUDED_)
