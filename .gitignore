@@ -3,15 +3,19 @@
 /GarminBinary/.vs
 /GarminBinary/GarminBinary.vcxproj.user
 
-# Compiled images
+# Build products
 /GarminBinary/Release
 /GarminBinary/Debug
+/GarminBinary/GarminBinary.aps
 
 #--------------------------------------
 # User personalization
 /Gar2rnx/.settings/language.settings.xml
 
-# Compiled images
+# Build products
 /Gar2rnx/Gar2Rnx.exe
 /Gar2rnx/*.o
 
+#--------------------------------------
+# User files
+/GarminBinary/GarminBinary.xml

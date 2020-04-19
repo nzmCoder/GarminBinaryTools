@@ -43,6 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Windows.h"
 #include "Mmsystem.h"
 #include <map>
+#include <string>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -127,7 +128,7 @@ BOOL CAboutDlg::OnInitDialog()
     m_strAboutText =
         "GARMIN BINARY EXPLORER for Garmin GPS Receivers that support serial I/O.\r\n"\
         "Please let me know your experience. Contact normmoulton at yahoo dot com.\r\n"\
-        "Copyright (C) 2016-2017 Norm Moulton\r\n"\
+        "Copyright (C) 2016-2020 Norm Moulton\r\n"\
         "\r\n"\
         "This program is free software: you can redistribute it and/or modify "\
         "it under the terms of the GNU General Public License as published by "\
@@ -140,7 +141,9 @@ BOOL CAboutDlg::OnInitDialog()
         "GNU General Public License for more details.\r\n"\
         "\r\n"\
         "You should have received a copy of the GNU General Public License "\
-        "along with this program.  If not, see <http://www.gnu.org/licenses/>.";
+        "along with this program.  If not, see <http://www.gnu.org/licenses/>.\r\n"\
+        "\r\n"\
+        "Application source: <https://github.com/nzmCoder/GarminBinaryTools/>.";
 
     UpdateData(FALSE);
 
