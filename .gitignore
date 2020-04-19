@@ -1,0 +1,17 @@
+#--------------------------------------
+# User personalization
+/GarminBinary/.vs
+/GarminBinary/GarminBinary.vcxproj.user
+
+# Compiled images
+/GarminBinary/Release
+/GarminBinary/Debug
+
+#--------------------------------------
+# User personalization
+/Gar2rnx/.settings/language.settings.xml
+
+# Compiled images
+/Gar2rnx/Gar2Rnx.exe
+/Gar2rnx/*.o
+

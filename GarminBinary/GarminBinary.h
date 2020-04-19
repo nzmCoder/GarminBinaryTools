@@ -28,24 +28,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Main Resource Symbols
 #include "resource.h"
-
-// Define size specific types.
-typedef unsigned char   t_UINT8;
-typedef unsigned short  t_UINT16;
-typedef unsigned int    t_UINT32;
+#include <cstdint>
 
 // Due to late decoding, need space in payload for received message's
 // checksum, DLE, and ETX bytes, therefore 3 extra.
 enum { PAYLOAD_BYTES = 0xFF + 3 };
 typedef struct
 {
-    t_UINT8 Start;
-    t_UINT8 CmdId;
-    t_UINT8 SizeBytes;
-    t_UINT8 Payload[PAYLOAD_BYTES];
-    t_UINT8 ChkSum;
-    t_UINT8 End1;
-    t_UINT8 End2;
+    uint8_t Start;
+    uint8_t CmdId;
+    uint8_t SizeBytes;
+    uint8_t Payload[PAYLOAD_BYTES];
+    uint8_t ChkSum;
+    uint8_t End1;
+    uint8_t End2;
 } t_MSG_FORMAT;
 
 typedef enum
@@ -108,18 +104,8 @@ class CGarminBinaryApp : public CWinApp
 public:
     CGarminBinaryApp();
 
-// Overrides
-    // ClassWizard generated virtual function overrides
-    //{{AFX_VIRTUAL(CGarminBinaryApp)
 public:
     virtual BOOL InitInstance();
-    //}}AFX_VIRTUAL
 
-// Implementation
-
-    //{{AFX_MSG(CGarminBinaryApp)
-    // NOTE - the ClassWizard will add and remove member functions here.
-    //    DO NOT EDIT what you see in these blocks of generated code !
-    //}}AFX_MSG
     DECLARE_MESSAGE_MAP()
 };

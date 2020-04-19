@@ -58,7 +58,7 @@ public:
 
     void ClearMsgBuff(t_MSG_FORMAT* pMsg);
     void DisplayMsg(t_MSG_FORMAT *pMsg);
-    t_UINT8 CalcChksum(t_MSG_FORMAT* pMsg);
+    uint8_t CalcChksum(t_MSG_FORMAT* pMsg);
     void AddToDisplay(CString strHdr, t_MSG_FORMAT *pMsg);
     void UpdateMsgSeen();
     void UpdateErrSeen();
@@ -162,7 +162,7 @@ private:
     t_MSG_FORMAT m_SendMsg;
     t_MSG_FORMAT m_RecvMsg;
     char* m_pRcv;
-    t_UINT8 m_lastRecv;
+    uint8_t m_lastRecv;
 
     unsigned int mMsgsSeen[0x100];
     unsigned int mErrFrames;

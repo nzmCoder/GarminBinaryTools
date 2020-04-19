@@ -87,46 +87,32 @@ public:
     CAboutDlg();
 
 // Dialog Data
-    //{{AFX_DATA(CAboutDlg)
     enum { IDD = IDD_ABOUTBOX };
     CString m_strAboutText;
     CString m_strBuildDate;
-    //}}AFX_DATA
 
-    // ClassWizard generated virtual function overrides
-    //{{AFX_VIRTUAL(CAboutDlg)
 protected:
     virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-    //}}AFX_VIRTUAL
-
-// Implementation
-protected:
-    //{{AFX_MSG(CAboutDlg)
     virtual BOOL OnInitDialog();
-    //}}AFX_MSG
+
     DECLARE_MESSAGE_MAP()
 };
 
 CAboutDlg::CAboutDlg() : CDialog(CAboutDlg::IDD)
 {
-    //{{AFX_DATA_INIT(CAboutDlg)
     m_strAboutText = _T("");
     m_strBuildDate = _T("");
-    //}}AFX_DATA_INIT
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialog::DoDataExchange(pDX);
-    //{{AFX_DATA_MAP(CAboutDlg)
+
     DDX_Text(pDX, IDC_STAT_TEXT, m_strAboutText);
     DDX_Text(pDX, IDC_STAT_BUILD_DATE, m_strBuildDate);
-    //}}AFX_DATA_MAP
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
-    //{{AFX_MSG_MAP(CAboutDlg)
-    //}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 BOOL CAboutDlg::OnInitDialog()
@@ -170,10 +156,6 @@ BOOL CAboutDlg::OnInitDialog()
 CGarminBinaryDlg::CGarminBinaryDlg(CWnd* pParent /*=NULL*/)
     : CDialog(CGarminBinaryDlg::IDD, pParent)
 {
-    //{{AFX_DATA_INIT(CGarminBinaryDlg)
-    // NOTE: the ClassWizard will add member initialization here
-    //}}AFX_DATA_INIT
-    // Note that LoadIcon does not require a subsequent DestroyIcon in Win32
     m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
@@ -943,9 +925,9 @@ void CGarminBinaryDlg::SendMsg()
 void CGarminBinaryDlg::RecvMsg()
 {
     DWORD bytesRead = 0;
-    t_UINT8 byte = 0;
+    uint8_t byte = 0;
     int nTime = 0;
-    static t_UINT8 sLastbyte = 0;
+    static uint8_t sLastbyte = 0;
     unsigned int nNum = 0;
 
     // See if there is a byte to read.
@@ -1010,12 +992,12 @@ void CGarminBinaryDlg::RecvMsg()
 /////////////////////////////////////////////////////////////////////////////
 ///<summary>Calculate and return the Garmin checksum
 /// for the current message.</summary>
-t_UINT8 CGarminBinaryDlg::CalcChksum(t_MSG_FORMAT *pMsg)
+uint8_t CGarminBinaryDlg::CalcChksum(t_MSG_FORMAT *pMsg)
 {
     // Chksum calculated over CmdId, Size, and payload only.
 
     // Sum up the byte values.
-    t_UINT8 val = pMsg->CmdId;
+    uint8_t val = pMsg->CmdId;
     val += pMsg->SizeBytes;
 
     // Add sum of payload bytes, if any.
@@ -1085,13 +1067,13 @@ CString CGarminBinaryDlg::DecodeUTC()
 #pragma pack(1)
     typedef struct
     {
-        t_UINT8  month;
-        t_UINT8  day;
-        t_UINT16 year;
-        t_UINT8  hour;
-        t_UINT8  unused;
-        t_UINT8  minute;
-        t_UINT8  second;
+        uint8_t  month;
+        uint8_t  day;
+        uint16_t year;
+        uint8_t  hour;
+        uint8_t  unused;
+        uint8_t  minute;
+        uint8_t  second;
     } t_GPS_UTC;
 
     // Recast the payload to the structure format.
@@ -1206,7 +1188,7 @@ void CGarminBinaryDlg::DecodePVT()
         float    epe;       // estimated position error, 2 sigma (meters)
         float    eph;       // epe, but horizontal only (meters)
         float    epv;       // epe but vertical only (meters )
-        t_UINT16 fix;       // 1- None, 2- 2D, 3- 3D, 4- 2D WAAS, 5- 3D WAAS
+        uint16_t fix;       // 1- None, 2- 2D, 3- 3D, 4- 2D WAAS, 5- 3D WAAS
         double   gps_tow;   // gps time of week (seconds)
         double   lat;       // latitude (radians)
         double   lon;       // longitude (radians)
@@ -1214,8 +1196,8 @@ void CGarminBinaryDlg::DecodePVT()
         float    lat_vel;   // velocity north (meters/second)
         float    alt_vel;   // velocity up (meters/sec)
         float    msl_hght;  // height of WGS 84 above MSL (meters)
-        t_UINT16 leap_sec;  // diff between GPS and UTC (seconds)
-        t_UINT16 grmn_days; // days from UTC 31-December-1989 to last Sunday
+        uint16_t leap_sec;  // diff between GPS and UTC (seconds)
+        uint16_t grmn_days; // days from UTC 31-December-1989 to last Sunday
     } t_GPS_PVT_DATA;
 
     // Recast the payload to the structure format.
@@ -1262,7 +1244,7 @@ void CGarminBinaryDlg::ProcessFrame()
     CString str;
 
     // Verify received checksum.
-    t_UINT8 size = m_RecvMsg.SizeBytes;
+    uint8_t size = m_RecvMsg.SizeBytes;
 
     // Copy checksum byte into checksum field.
     m_RecvMsg.ChkSum = m_RecvMsg.Payload[size];
