@@ -74,7 +74,7 @@ static const CString s_StrHiBaud = "57600";
 CSerial m_Serial;
 
 // XML-like storage of persistent data
-CProfile m_Profile("GarminBinary.XML");
+CProfile m_Profile;
 
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
@@ -390,7 +390,7 @@ BOOL CGarminBinaryDlg::OnInitDialog()
     }
 
     // Required initialization of the profile object before use.
-    m_Profile.Init();
+    m_Profile.Initialize("GarminBinary.XML");
 
     // Get and set the path to the GAR2RNX component, so this tag gets put in XML
     CString strRinexPath = m_Profile.GetProfileStr("MainConfig", "Gar2RnxPath" , "C:\\Projects\\GarminTools\\Bin\\");

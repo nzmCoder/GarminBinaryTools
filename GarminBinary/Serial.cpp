@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////
 // Include the standard header files
 
-#define STRICT
+#include "stdafx.h"
 #include <crtdbg.h>
 #include <tchar.h>
 #include <windows.h>

@@ -1,7 +1,7 @@
 /****************************************************************************
 GARMIN BINARY EXPLORER for Garmin GPS Receivers that support serial I/O.
 
-Copyright (C) 2016-2017 Norm Moulton
+Copyright (C) 2016-2020 Norm Moulton
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,46 +20,42 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // Profile.h: interface for the CProfile class.
 
 #pragma once
+#include "TinyXml2.h"
 
 class CProfile
 {
 public:
-    CProfile(CString strDataFileName);
-    virtual ~CProfile();
 
-    void Init(void);
-    void ClearProfile();
+   // Ctor/dtor.
+   CProfile();
+   virtual ~CProfile();
 
-    bool WriteProfileStr(CString strSection, CString strEntry, CString strValue);
-    CString GetProfileStr(CString strSection, CString strEntry, CString strDefault);
+   // Client must call upon start-up.
+   void Initialize(CString strDataFilename, bool bUseAppData = true);
 
-    bool WriteProfileInt(CString strSection, CString strEntry, int nValue);
-    UINT GetProfileInt(CString strSection, CString strEntry, int nDefault);
+   // Clear out any existing stored data.
+   void Clear();
 
-    CString GetFileName() const;
+   // Get and set string persistent data.
+   bool WriteProfileStr(CString strSection, CString strEntry, CString strValue);
+   CString GetProfileStr(CString strSection, CString strEntry, CString strDefault);
+
+   // Get and set integer persistent data.
+   bool WriteProfileInt(CString strSection, CString strEntry, int nValue);
+   int GetProfileInt(CString strSection, CString strEntry, int nDefault);
 
 private:
 
-    typedef struct
-    {
-        CString strSection;
-        CString strEntry;
-        CString strValue;
-    } t_ProfileEntry;
+   // Helper methods.
+   tinyxml2::XMLElement* FindElement(CString strSection, CString strEntry);
+   void AddElement(CString strSection, CString strEntry, CString strValue);
+   void AddElement(CString strSection, CString strEntry, int nValue);
 
-    bool _AddEntry(CString strSection, CString strEntry, CString strValue);
-    int _FindEntry(CString strSection, CString strEntry);
+   // Convert the provided file name to a fully qualified path and name.
+   CString PrepareAppDataFilename(CString strFileName);
 
-    void _ReadElement(CFile& file, CString& strSection, CString& strEntry, CString& strValue);
-    void _WriteElement(CFile& file, CString strSection, CString strEntry, CString strValue);
-
-    // Data members
-
-    // The maximum number of stored elements.
-    enum { TABLE_SIZE = 16 };
-
-    t_ProfileEntry m_ProfileTable[TABLE_SIZE];
-    CString m_strDataFullPath;
-    bool m_bNeedsSave;
-    const CString m_strDataFileName;
+   // Data members
+   tinyxml2::XMLDocument* mXmlDocPtr;
+   CString mStrDataFilename;
+   bool mIsInitialized;
 };
